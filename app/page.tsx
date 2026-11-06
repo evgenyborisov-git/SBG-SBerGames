@@ -27,7 +27,7 @@ export default function Home(){
  },[]);
  const s=data?.state;const date=data?new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(data.serverTime):'';
  const disabled=busy||!s||!!pending.current;
- return <main><header className="top"><a className="brand" href="/">✦ <span>Чудо Lab<small>SBerGames</small></span></a><span className="tag">🪙 {s?.coins??'—'} <small>монет</small></span></header>
+ return <main><header className="top"><a className="brand" href="/">✦ <span>Чудозвери<small>Сберселлер</small></span></a><span className="tag">🪙 {s?.coins??'—'} <small>монет</small></span></header>
  <div className="heading"><div><p className="eyebrow">МАЛЕНЬКАЯ ЗАБОТА · БОЛЬШИЕ ЧУДЕСА</p><h1>{tab==='pet'?'Твой маленький мир':'Коллекция чудес'}</h1></div><span className="version">MVP 0.1</span></div>
  <nav aria-label="Разделы"><button aria-pressed={tab==='pet'} onClick={()=>setTab('pet')}>🐣 Питомец</button><button aria-pressed={tab==='collection'} onClick={()=>setTab('collection')}>🎒 Коллекция <span>{s?.collection.length??0}/3</span></button></nav>
  {tab==='pet'?<><section className="panel pet-panel"><div className="top"><div><h2>Чудик</h2><p className="muted">{s&&s.level>=3?'Волшебный друг':s&&s.level>=2?'Подросший Чудик':'Малыш Чудик'}</p></div><span className="level">Уровень {s?.level??'—'}</span></div><div className="habitat"><span className="spark one">✦</span><span className="spark two">✧</span><div className="pet" role="img" aria-label="Чудик">{s&&s.level>=3?'🐉':s&&s.level>=2?'🐥':'🐣'}</div><div className="island"/><p>Заботься обо мне, и я вырасту!</p></div>
