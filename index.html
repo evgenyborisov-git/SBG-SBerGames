@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SBerGames · Чудо Lab — прототип</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#24334b;background:#e9f7ff}*{box-sizing:border-box}body{margin:0}main{max-width:470px;margin:auto;padding:22px 18px 38px}.top{display:flex;justify-content:space-between;align-items:center}.tag{background:#fff;border-radius:30px;padding:8px 13px;font-size:13px}.panel{background:#fff;border-radius:26px;padding:20px;margin-top:18px;box-shadow:0 12px 30px #77a8c522}h1{font-size:27px;margin:16px 0 3px}h2{font-size:18px;margin:0 0 12px}.muted{color:#64748b;font-size:13px}.pet{text-align:center;background:linear-gradient(#d4f6ff,#fef2db);border-radius:24px;padding:28px 10px 20px;margin:15px 0}.creature{font-size:100px;line-height:1.5;transition:transform .2s;display:block}.creature.bounce{transform:scale(1.12) rotate(-5deg)}.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}.meter{background:#e9eef5;border-radius:20px;height:11px;overflow:hidden;margin-top:7px}.fill{height:100%;background:#58cfa2;border-radius:20px}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}button{border:0;background:#5469e9;color:white;border-radius:16px;padding:14px 9px;font-weight:700;font-size:14px;cursor:pointer}button:disabled{background:#b9c0d0;cursor:not-allowed}.secondary{background:#fff;color:#4659ca;border:1px solid #d8e0fa}.item{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #edf1f5;align-items:center}.item button{padding:10px;font-size:12px}.message{min-height:38px;color:#4566b5;font-weight:600;text-align:center;font-size:14px;margin-top:14px}
+</style></head>
+<body><main>
+<div class="top"><strong>✨ Чудо Lab</strong><span class="tag">🪙 <span id="coins"></span> монет</span></div>
+<h1>Мой питомец</h1><div class="muted">Тестовый прототип · данные только на этом устройстве</div>
+<section class="panel">
+<div class="top"><h2 id="petName">Чудик</h2><span class="tag" id="level"></span></div>
+<div class="pet"><span class="creature" id="creature" role="img" aria-label="Питомец">🐣</span><strong id="stage"></strong><div class="muted">Заботься обо мне, и я вырасту!</div></div>
+<div class="stats"><div>⚡ Энергия <strong id="energyText"></strong><div class="meter"><div class="fill" id="energyBar"></div></div></div><div>⭐ Опыт <strong id="xpText"></strong><div class="meter"><div class="fill" id="xpBar" style="background:#f5ba53"></div></div></div></div>
+<div class="buttons"><button id="feed">🥕 Покормить · 5 🪙</button><button id="play">🎾 Поиграть</button></div>
+<div class="message" id="message" aria-live="polite"></div>
+</section>
+<section class="panel"><h2>🎁 Награды</h2><div class="item"><span>Ежедневный подарок <small class="muted">+20 монет</small></span><button id="daily">Получить</button></div><div class="item"><span>Тестовое задание <small class="muted">+15 монет, один раз</small></span><button id="offer" class="secondary">Выполнить</button></div></section>
+<section class="panel"><h2>🎒 Коллекция</h2><div id="collection"></div></section>
+<p class="muted">MVP 0.1 · Важно: это локальный демонстрационный прототип, не серверная версия и не готовое Telegram Mini App. Не используйте для реальных наград или платежей.</p>
+</main>
+<script>
+'use strict';
+const KEY='sbergames-demo-v1';
+const today=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Moscow'});
+const initial=()=>({coins:50,energy:70,xp:0,level:1,lastDaily:'',offerDone:false,collection:['🥚 Первое яйцо']});
+let state;
+try{const saved=JSON.parse(localStorage.getItem(KEY));state=saved&&typeof saved==='object'?{...initial(),...saved}:initial()}catch{state=initial()}
+const el=id=>document.getElementById(id);
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+function save(){localStorage.setItem(KEY,JSON.stringify(state));render()}
+function say(t){el('message').textContent=t}
+function gain(amount){state.xp+=amount;while(state.xp>=100){state.xp-=100;state.level++;state.coins+=25;if(state.level===2&&!state.collection.includes('🌱 Первый росток'))state.collection.push('🌱 Первый росток');if(state.level===3&&!state.collection.includes('🦋 Крылья чудес'))state.collection.push('🦋 Крылья чудес')}}
+function render(){
+state.energy=clamp(Number(state.energy)||0,0,100);state.coins=Math.max(0,Number(state.coins)||0);state.level=Math.max(1,Number(state.level)||1);state.xp=clamp(Number(state.xp)||0,0,99);
+el('coins').textContent=state.coins;el('level').textContent='Уровень '+state.level;el('energyText').textContent=state.energy+'/100';el('energyBar').style.width=state.energy+'%';el('xpText').textContent=state.xp+'/100';el('xpBar').style.width=state.xp+'%';
+el('creature').textContent=state.level>=3?'🐉':state.level>=2?'🐥':'🐣';el('stage').textContent=state.level>=3?'Волшебный друг':state.level>=2?'Подросший Чудик':'Малыш Чудик';
+el('feed').disabled=state.coins<5||state.energy>=100;el('play').disabled=state.energy<15;el('daily').disabled=state.lastDaily===today();el('daily').textContent=state.lastDaily===today()?'Получено':'Получить';el('offer').disabled=state.offerDone;el('offer').textContent=state.offerDone?'Готово':'Выполнить';
+el('collection').innerHTML='';for(const item of state.collection){const div=document.createElement('div');div.className='item';div.textContent=item;el('collection').append(div)}
+}
+el('feed').onclick=()=>{if(state.coins<5||state.energy>=100)return;state.coins-=5;state.energy=clamp(state.energy+20,0,100);gain(10);save();say('Вкусно! +20 энергии, +10 опыта 🥕')};
+el('play').onclick=()=>{if(state.energy<15)return;state.energy-=15;gain(25);state.coins+=3;save();say('Отличная игра! +25 опыта и +3 монеты 🎾');el('creature').classList.add('bounce');setTimeout(()=>el('creature').classList.remove('bounce'),220)};
+el('daily').onclick=()=>{if(state.lastDaily===today())return;state.lastDaily=today();state.coins+=20;save();say('Ежедневный подарок получен! +20 монет 🎁')};
+el('offer').onclick=()=>{if(state.offerDone)return;state.offerDone=true;state.coins+=15;save();say('Тестовое задание выполнено! +15 монет ✨')};
+render();
+</script></body></html>
