@@ -1,0 +1,40 @@
+'use client';
+import {useEffect,useRef,useState} from 'react';
+type Snapshot={state:{coins:number;energy:number;xp:number;level:number;lastDaily:string;offerDone:boolean;collection:string[]};revision:number;mode:string;serverTime:number;message?:string};
+declare global {interface Window{Telegram?:{WebApp:{initData:string;ready:()=>void;expand:()=>void;HapticFeedback?:{notificationOccurred:(type:string)=>void}}}}}
+export default function Home(){
+ const [data,setData]=useState<Snapshot|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('Подключаемся к лаборатории…'),[error,setError]=useState(false),[tab,setTab]=useState('pet');
+ const pending=useRef<{action:string;key:string}|null>(null),lock=useRef(false),initData=useRef('');
+ async function request(action?:string){
+  if(lock.current)return;lock.current=true;setBusy(true);setError(false);
+  const headers:Record<string,string>={};if(initData.current)headers['x-telegram-init-data']=initData.current;
+  if(action){pending.current??={action,key:crypto.randomUUID()};headers['Content-Type']='application/json';headers['Idempotency-Key']=pending.current.key;}
+  try{
+   const response=await fetch('/api/game',{method:action?'POST':'GET',headers,body:action?JSON.stringify({action:pending.current!.action}):undefined,signal:AbortSignal.timeout(15000)});
+   const result=await response.json() as Snapshot & {message?:string};
+   if(!response.ok){if(response.status<500)pending.current=null;throw new Error(result.message||'Не удалось связаться с сервером');}
+   if(action)pending.current=null;setData(result);setMessage(result.message||'Прогресс сохранён на сервере');
+   if(action)window.Telegram?.WebApp.HapticFeedback?.notificationOccurred('success');
+  }catch(e){setError(true);setMessage(e instanceof Error?e.message:'Нет соединения. Повтори запрос');}
+  finally{setBusy(false);lock.current=false;}
+ }
+ useEffect(()=>{
+  const boot=()=>{const tg=window.Telegram?.WebApp;initData.current=tg?.initData||'';tg?.ready();tg?.expand();void request();};
+  const script=document.createElement('script');script.src='https://telegram.org/js/telegram-web-app.js';script.onload=boot;script.onerror=boot;document.head.appendChild(script);
+  const refresh=()=>{if(document.visibilityState==='visible'&&!pending.current)void request();};document.addEventListener('visibilitychange',refresh);
+  const interval=setInterval(()=>{if(!pending.current&&document.visibilityState==='visible')void request()},60000);
+  return()=>{clearInterval(interval);document.removeEventListener('visibilitychange',refresh);script.remove();};
+ },[]);
+ const s=data?.state;const date=data?new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(data.serverTime):'';
+ const disabled=busy||!s||!!pending.current;
+ return <main><header className="top"><a className="brand" href="/">✦ <span>Чудо Lab<small>SBerGames</small></span></a><span className="tag">🪙 {s?.coins??'—'} <small>монет</small></span></header>
+ <div className="heading"><div><p className="eyebrow">МАЛЕНЬКАЯ ЗАБОТА · БОЛЬШИЕ ЧУДЕСА</p><h1>{tab==='pet'?'Твой маленький мир':'Коллекция чудес'}</h1></div><span className="version">MVP 0.1</span></div>
+ <nav aria-label="Разделы"><button aria-pressed={tab==='pet'} onClick={()=>setTab('pet')}>🐣 Питомец</button><button aria-pressed={tab==='collection'} onClick={()=>setTab('collection')}>🎒 Коллекция <span>{s?.collection.length??0}/3</span></button></nav>
+ {tab==='pet'?<><section className="panel pet-panel"><div className="top"><div><h2>Чудик</h2><p className="muted">{s&&s.level>=3?'Волшебный друг':s&&s.level>=2?'Подросший Чудик':'Малыш Чудик'}</p></div><span className="level">Уровень {s?.level??'—'}</span></div><div className="habitat"><span className="spark one">✦</span><span className="spark two">✧</span><div className="pet" role="img" aria-label="Чудик">{s&&s.level>=3?'🐉':s&&s.level>=2?'🐥':'🐣'}</div><div className="island"/><p>Заботься обо мне, и я вырасту!</p></div>
+ <div className="stats"><div><div className="top"><span>⚡ Энергия</span><strong>{s?.energy??'—'}<small>/100</small></strong></div><progress aria-label="Энергия" max="100" value={s?.energy??0}/><small className="muted">+1 каждую минуту</small></div><div><div className="top"><span>⭐ Опыт</span><strong>{s?.xp??'—'}<small>/100</small></strong></div><progress className="xp" aria-label="Опыт" max="100" value={s?.xp??0}/><small className="muted">Новый уровень: +25 монет</small></div></div>
+ <div className="buttons"><button disabled={disabled||s!.coins<5||s!.energy>=100} onClick={()=>request('feed')}>🥕 Покормить<small>−5 монет · +20 энергии · +10 XP</small></button><button className="secondary" disabled={disabled||s!.energy<15} onClick={()=>request('play')}>🎾 Поиграть<small>−15 энергии · +25 XP · +3 монеты</small></button></div></section>
+ <section className="panel"><h2>Каждый день — маленькое чудо</h2><div className="item"><span className="reward-icon">🎁</span><div><strong>Ежедневный подарок</strong><p className="muted">+20 монет · новый день по Москве</p></div><button disabled={disabled||s!.lastDaily===date} onClick={()=>request('daily')}>{s?.lastDaily===date?'Получено':'Забрать'}</button></div><div className="item"><span className="reward-icon">🧪</span><div><strong>Первый эксперимент</strong><p className="muted">Тестовое задание · +15 монет один раз</p></div><button disabled={disabled||s!.offerDone} onClick={()=>request('offer')}>{s?.offerDone?'Готово':'Пройти'}</button></div></section></>:<section className="panel"><h2>История твоего Чудика</h2><p className="muted">Расти вместе с питомцем и открывай памятные знаки</p>{['🥚 Первое яйцо','🌱 Первый росток','🦋 Крылья чудес'].map((item,i)=><div className={'collection-item '+(s?.collection.includes(item)?'unlocked':'locked')} key={item}><span>{item}</span><small>{s?.collection.includes(item)?'Открыто':`Уровень ${i+1}`}</small></div>)}<p className="muted">В MVP доступен один питомец и три этапа его истории</p></section>}
+ <div role="status" aria-live="polite" className={'status '+(error?'error':'')}>{busy?'Сохраняем…':message}{error&&<button className="retry" disabled={busy} onClick={()=>request(pending.current?.action)}>Повторить</button>}</div>
+ {!s&&error&&!initData.current&&<a className="signin" href="/signin-with-chatgpt?return_to=/" target="_top">Войти для браузерного теста</a>}
+ <footer><span className="dot"/>{data?.mode==='telegram'?'Telegram · серверный прогресс':'Браузерный тест · серверный прогресс'}<p>Тестовые монеты и задания. Без платежей и реальных призов.</p><small>Браузер и Telegram используют отдельные игровые профили</small></footer></main>
+}
