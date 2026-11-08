@@ -1,35 +1,27 @@
 'use client';
-import {useEffect, useRef, useState, type CSSProperties} from 'react';
+import {useCallback, useEffect, useRef, useState, type CSSProperties} from 'react';
 import type {galleryPets} from '../lib/gallery';
-import {artBackground, artPreloadUrl} from '../lib/art-resolution';
+import {artBackground} from '../lib/art-resolution';
 import {ChudikMotion} from './chudik-motion';
+import {PetActionMotion} from './pet-action-motion';
+import {actionSource, loadArt, loadPetMotion} from '../lib/client-art';
+import {reactionDuration} from '../lib/pet-motion';
 
 type PetId = typeof galleryPets[number]['id'];
 export type Reaction = 0 | 1 | 2 | 3 | 4 | 5;
 // Existing game action codes: idle, food, play, rest, affection, celebration.
 const columns = [0, 1, 2, 3, 0, 0];
-const cached = new Map<PetId, Promise<void>>();
-function preload(petId: PetId) {
-  const existing = cached.get(petId);
-  if (existing) return existing;
-  const task = new Promise<void>((resolve, reject) => {
-    const image = new Image();
-    const timeout = setTimeout(() => finish(new Error('image timeout')), 15000);
-    function finish(error?: Error) {
-      clearTimeout(timeout);
-      image.onload = image.onerror = null;
-      if (error) reject(error); else resolve();
-    }
-    image.onload = () => finish();
-    image.onerror = () => finish(new Error('image unavailable'));
-    image.src = artPreloadUrl(`/art/reactions/${petId}.webp`);
-  });
-  cached.set(petId, task);
-  void task.catch(() => {if (cached.get(petId) === task) cached.delete(petId);});
-  return task;
+async function preload(petId: PetId, stage: number, reaction = 0) {
+  try {
+    if (petId === 'chudik' && (reaction === 0 || reaction === 4)) {
+      await Promise.all([loadArt(`/art/motion/chudik-${Math.min(2, Math.max(0, stage))}.webp`), loadArt('/art/motion/island.webp')]);
+    } else await loadPetMotion(petId, stage);
+  } catch {
+    await loadArt(`/art/reactions/${petId}.webp`);
+  }
 }
 
-export function usePetReaction(petId: PetId) {
+export function usePetReaction(petId: PetId, stage = 0) {
   const [state, setState] = useState({petId, reaction: 0 as Reaction, sequence: 0, loading: false, failed: false});
   const generation = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -40,21 +32,23 @@ export function usePetReaction(petId: PetId) {
   }
   useEffect(() => {
     reset();
-    // Only the currently displayed pet is prefetched, never all twelve atlases.
-    void preload(petId).catch(() => {});
     return () => {generation.current++; if (timer.current) clearTimeout(timer.current);};
   }, [petId]);
-  function trigger(reaction: Reaction) {
+  useEffect(() => {
+    // Prefetch only the selected age; a level-up must not cancel its new reaction.
+    void preload(petId, stage).catch(() => {});
+  }, [petId, stage]);
+  function trigger(reaction: Reaction, stageOverride = stage) {
     const ticket = ++generation.current;
     if (timer.current) clearTimeout(timer.current);
     setState(previous => ({...previous, petId, loading: true, failed: false}));
-    void preload(petId).then(() => {
+    void preload(petId, stageOverride, reaction).then(() => {
       if (ticket !== generation.current) return;
       setState(previous => ({petId, reaction, sequence: previous.sequence + 1, loading: false, failed: false}));
       // Start the hold after loading, so slow networks cannot consume the reaction.
       timer.current = setTimeout(() => {
         if (ticket === generation.current) setState(previous => ({...previous, reaction: 0}));
-      }, reaction === 3 ? 8500 : 6000);
+      }, reactionDuration(reaction));
     }).catch(() => {
       if (ticket === generation.current) setState(previous => ({...previous, reaction: 0, loading: false, failed: true}));
     });
@@ -62,19 +56,25 @@ export function usePetReaction(petId: PetId) {
   return {...state, reaction: state.petId === petId ? state.reaction : 0 as Reaction, trigger, reset};
 }
 
-/** Scene backgrounds stay fixed; Chudik uses a separate transparent actor. */
+/** All pets animate separately from the stationary island. */
 export function PetVisual({petId, stage, reaction, sequence, idleStyle}: {
   petId: PetId; stage: number; reaction: Reaction; sequence: number; idleStyle: CSSProperties;
 }) {
+  const [readySource, setReadySource] = useState('');
+  const [chudikReadySource, setChudikReadySource] = useState('');
+  const onChudikReady = useCallback((source: string) => setChudikReadySource(source), []);
+  const onReady = useCallback((source: string) => setReadySource(source), []);
+  const motionReady = petId === 'chudik' && (reaction === 0 || reaction === 4) ? chudikReadySource === `/art/motion/chudik-${stage}.webp` : readySource === actionSource(petId, stage);
   const symbols = reaction === 4 ? ['♥', '♥', '♥', '♥'] : reaction === 3 ? ['☾', '✧', '✧', '☾'] : ['✦', '✧', '✦', '✧'];
   return <span className="pet-visual" aria-hidden="true">
-    <span className="pet-frame pet-idle-frame" style={idleStyle}/>
-    {[0, 1, 2, 3].map(column => <span key={column} className={'pet-frame pet-reaction-frame' + (reaction !== 0 && columns[reaction] === column ? ' is-visible' : '')} style={{
+    {!motionReady && <span className="pet-frame pet-idle-frame" style={idleStyle}/>}
+    {reaction !== 0 && !motionReady && <span className="pet-frame pet-reaction-frame is-visible" style={{
       backgroundImage: artBackground(`/art/reactions/${petId}.webp`),
       backgroundSize: '400% 300%',
-      backgroundPosition: `${column * 100 / 3}% ${Math.min(2, Math.max(0, stage)) * 50}%`,
-    }}/>)}
-    {petId === 'chudik' && <ChudikMotion stage={stage} reaction={reaction} sequence={sequence}/>}
+      backgroundPosition: `${columns[reaction] * 100 / 3}% ${Math.min(2, Math.max(0, stage)) * 50}%`,
+    }}/>}
+    <PetActionMotion petId={petId} stage={stage} reaction={reaction} sequence={sequence} onReady={onReady}/>
+    {petId === 'chudik' && <ChudikMotion stage={stage} reaction={reaction} sequence={sequence} onReady={onChudikReady}/>}
     {reaction !== 0 && <span key={`${petId}-${sequence}`} className={`pet-emotion-particles emotion-${reaction}`}>
       {symbols.map((symbol, index) => <i key={index} style={{left: `${25 + index * 17}%`, animationDelay: `${index * .18}s`}}>{symbol}</i>)}
     </span>}

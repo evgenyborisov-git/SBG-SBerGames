@@ -1,30 +1,11 @@
 'use client';
 import {useEffect, useRef, useState} from 'react';
 import {artBackground, artPreloadUrl} from '../lib/art-resolution';
+import {loadArt} from '../lib/client-art';
 import {affectionMotion, idleMotion, sampleMotion} from '../lib/chudik-motion';
 
-const loaded = new Map<string, Promise<void>>();
-function loadImage(src: string) {
-  const cached = loaded.get(src);
-  if (cached) return cached;
-  const task = new Promise<void>((resolve, reject) => {
-    const image = new Image();
-    const timeout = setTimeout(() => finish(new Error('motion image timeout')), 15000);
-    function finish(error?: Error) {
-      clearTimeout(timeout); image.onload = image.onerror = null;
-      if (error) reject(error); else resolve();
-    }
-    image.onload = () => finish();
-    image.onerror = () => finish(new Error('motion image unavailable'));
-    image.src = src;
-  });
-  loaded.set(src, task);
-  void task.catch(() => {if (loaded.get(src) === task) loaded.delete(src);});
-  return task;
-}
-
-export function ChudikMotion({stage, reaction, sequence}: {
-  stage: number; reaction: number; sequence: number;
+export function ChudikMotion({stage, reaction, sequence, onReady}: {
+  stage: number; reaction: number; sequence: number; onReady: (source: string) => void;
 }) {
   const element = useRef<HTMLSpanElement>(null);
   const [readySrc, setReadySrc] = useState('');
@@ -39,11 +20,11 @@ export function ChudikMotion({stage, reaction, sequence}: {
   const ready = readySrc === src;
   useEffect(() => {
     let active = true;
-    void Promise.all([loadImage(src), loadImage(artPreloadUrl('/art/motion/island.webp'))]).then(() => {
-      if (active) setReadySrc(src);
+    void Promise.all([loadArt(source), loadArt('/art/motion/island.webp')]).then(() => {
+      if (active) {setReadySrc(src); onReady(source);}
     }).catch(() => {}); // Keep the existing illustrated reaction as fallback.
     return () => {active = false;};
-  }, [src]);
+  }, [src, source, sequence, onReady]);
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => {setReduced(media.matches); setVisible(document.visibilityState === 'visible');};
