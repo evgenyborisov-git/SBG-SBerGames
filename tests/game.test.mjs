@@ -107,3 +107,64 @@ test('HTTP API: authenticated lifecycle, replay, profile isolation and rejected 
   const final=await call(undefined,{},'GET');assert.equal((await final.json()).state.coins,70);
  }finally{await mf.dispose()}
 });
+
+test('pet choice preserves progression and migrates existing profiles without restarting them',()=>{
+ const selectionTime=now-60000; // Stay within one Moscow day; the global fixture is one second before midnight.
+ const {petIds}=require('../.sites-runtime/test-build/pets.js');
+ let earned=transition(transition(initial(selectionTime),'daily',selectionTime),'offer',selectionTime);
+ for(let i=0;i<4;i++)earned=transition(earned,'play',selectionTime+i*2000);
+ for(const petId of petIds){
+  const selected=transition(earned,`select:${petId}`,selectionTime+8000);
+  assert.equal(selected.petId,petId);
+  const {petId:ignored,...progress}=selected;
+  const {petId:old,...expected}=restore(earned,selectionTime+8000);
+  assert.deepEqual(progress,expected);
+  assert.throws(()=>transition(selected,'daily',selectionTime+8000),/уже/);
+  assert.throws(()=>transition(selected,'offer',selectionTime+8000),/уже/);
+ }
+ const legacy={...earned};delete legacy.petId;
+ assert.equal(restore(legacy,selectionTime+8000).petId,'chudik');
+ assert.equal(restore(legacy,selectionTime+8000).level,2);
+ assert.equal(initial(selectionTime).petId,null);
+ assert.throws(()=>transition(earned,'select:unkselectionTimen',selectionTime),/питомца/);
+});
+
+test('D1 pet selection survives rereads and retries, isolates profiles and races safely with game actions',async()=>{
+ const {Miniflare}=await import('miniflare');
+ const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("ok")}}',d1Databases:['DB'],compatibilityDate:'2026-01-01'});
+ try{
+  const db=await mf.getD1Database('DB');
+  for(const sql of readFileSync('drizzle/0000_lame_havok.sql','utf8').split('--> statement-breakpoint'))await db.prepare(sql.trim()).run();
+  const results=await Promise.all(Array.from({length:8},()=>act(db,'pet-a','choose-luna','select:luna',now)));
+  assert.equal(results.filter(result=>!result.replayed).length,1);
+  assert.equal((await getState(db,'pet-a',now)).state.petId,'luna');
+  assert.equal((await getState(db,'pet-b',now)).state.petId,null);
+  await assert.rejects(act(db,'pet-a','choose-luna','select:owl',now),/другого действия/);
+  await Promise.all([act(db,'pet-a','choose-owl','select:owl',now+2000),act(db,'pet-a','play-with-friend','play',now+2000)]);
+  const saved=await getState(db,'pet-a',now+2000);
+  assert.equal(saved.state.petId,'owl');assert.equal(saved.state.coins,53);assert.equal(saved.state.xp,25);assert.equal(saved.state.energy,55);
+  const oldRetry=await act(db,'pet-a','choose-luna','select:luna',now+2000);
+  assert.equal(oldRetry.replayed,true);assert.equal(oldRetry.state.petId,'owl');assert.equal(oldRetry.revision,saved.revision);
+ }finally{await mf.dispose()}
+});
+
+test('HTTP pet selection validates IDs, persists choice and keeps rewards shared',async()=>{
+ const {Miniflare}=await import('miniflare');
+ const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("ok")}}',d1Databases:['DB'],compatibilityDate:'2026-01-01'});
+ try{
+  const db=await mf.getD1Database('DB');
+  for(const sql of readFileSync('drizzle/0000_lame_havok.sql','utf8').split('--> statement-breakpoint'))await db.prepare(sql.trim()).run();
+  const env={DB:db,TELEGRAM_BOT_TOKEN:'test-token'};
+  const call=(body,key='choose-operation-0001',user=12345,method='POST')=>handleGame(new Request('https://game.test/api/game',{method,headers:{'x-telegram-init-data':signed(Date.now(),{user:JSON.stringify({id:user})}),origin:'https://game.test','content-type':'application/json','idempotency-key':key},...(method==='POST'?{body:JSON.stringify(body)}:{})}),env,method==='POST');
+  assert.equal((await (await call(null,undefined,12345,'GET')).json()).state.petId,null);
+  for(const petId of [undefined,null,'unknown','../../secret',12,{}])assert.equal((await call({action:'select_pet',petId})).status,400);
+  let response=await call({action:'select_pet',petId:'whale'});assert.equal(response.status,200);assert.equal((await response.json()).state.petId,'whale');
+  response=await call({action:'select_pet',petId:'whale'});assert.equal((await response.json()).replayed,true);
+  assert.equal((await call({action:'select_pet',petId:'lynx'})).status,409);
+  assert.equal((await call({action:'daily'},'daily-operation-0001')).status,200);
+  response=await call({action:'select_pet',petId:'lynx'},'choose-operation-0002');const changed=await response.json();assert.equal(changed.state.petId,'lynx');assert.equal(changed.state.coins,70);
+  assert.equal((await call({action:'daily'},'daily-operation-0002')).status,409);
+  assert.equal((await (await call(null,undefined,12345,'GET')).json()).state.petId,'lynx');
+  assert.equal((await (await call(null,undefined,54321,'GET')).json()).state.petId,null);
+ }finally{await mf.dispose()}
+});

@@ -2,6 +2,942 @@
   "method": "lanczos3_export_not_native_redraw",
   "images": [
     {
+      "source": "/art/actions/badger-0.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 466574,
+          "path": "/art/retina/actions/badger-0@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1144832,
+          "path": "/art/retina/actions/badger-0@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/badger-1.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 687792,
+          "path": "/art/retina/actions/badger-1@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1688288,
+          "path": "/art/retina/actions/badger-1@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/badger-2.webp",
+      "sourceWidth": 1263,
+      "sourceHeight": 1246,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 585610,
+          "path": "/art/retina/actions/badger-2@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1397194,
+          "path": "/art/retina/actions/badger-2@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/chudik-0.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 627168,
+          "path": "/art/retina/actions/chudik-0@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1602886,
+          "path": "/art/retina/actions/chudik-0@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/chudik-1.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 587816,
+          "path": "/art/retina/actions/chudik-1@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1460276,
+          "path": "/art/retina/actions/chudik-1@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/chudik-2.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 751040,
+          "path": "/art/retina/actions/chudik-2@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1930716,
+          "path": "/art/retina/actions/chudik-2@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/deer-0.webp",
+      "sourceWidth": 1261,
+      "sourceHeight": 1247,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 964252,
+          "path": "/art/retina/actions/deer-0@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 2545146,
+          "path": "/art/retina/actions/deer-0@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/deer-1.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 688600,
+          "path": "/art/retina/actions/deer-1@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1804308,
+          "path": "/art/retina/actions/deer-1@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/deer-2.webp",
+      "sourceWidth": 1263,
+      "sourceHeight": 1245,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 987422,
+          "path": "/art/retina/actions/deer-2@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 2634152,
+          "path": "/art/retina/actions/deer-2@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/griffin-0.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 785870,
+          "path": "/art/retina/actions/griffin-0@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 2046824,
+          "path": "/art/retina/actions/griffin-0@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/griffin-1.webp",
+      "sourceWidth": 1263,
+      "sourceHeight": 1246,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 923498,
+          "path": "/art/retina/actions/griffin-1@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 2453188,
+          "path": "/art/retina/actions/griffin-1@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/griffin-2.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 935680,
+          "path": "/art/retina/actions/griffin-2@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 2537896,
+          "path": "/art/retina/actions/griffin-2@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/hedgehog-0.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 760090,
+          "path": "/art/retina/actions/hedgehog-0@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1992740,
+          "path": "/art/retina/actions/hedgehog-0@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/hedgehog-1.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 701296,
+          "path": "/art/retina/actions/hedgehog-1@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1804354,
+          "path": "/art/retina/actions/hedgehog-1@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/hedgehog-2.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 734334,
+          "path": "/art/retina/actions/hedgehog-2@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1905532,
+          "path": "/art/retina/actions/hedgehog-2@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/luna-0.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 413872,
+          "path": "/art/retina/actions/luna-0@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1017056,
+          "path": "/art/retina/actions/luna-0@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/luna-1.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 519238,
+          "path": "/art/retina/actions/luna-1@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1315852,
+          "path": "/art/retina/actions/luna-1@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/luna-2.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 694426,
+          "path": "/art/retina/actions/luna-2@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1720016,
+          "path": "/art/retina/actions/luna-2@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/lynx-0.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 492600,
+          "path": "/art/retina/actions/lynx-0@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1174710,
+          "path": "/art/retina/actions/lynx-0@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/lynx-1.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 640736,
+          "path": "/art/retina/actions/lynx-1@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1571970,
+          "path": "/art/retina/actions/lynx-1@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/lynx-2.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 743632,
+          "path": "/art/retina/actions/lynx-2@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1834386,
+          "path": "/art/retina/actions/lynx-2@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/otter-0.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 514158,
+          "path": "/art/retina/actions/otter-0@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1277568,
+          "path": "/art/retina/actions/otter-0@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/otter-1.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 723834,
+          "path": "/art/retina/actions/otter-1@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1815644,
+          "path": "/art/retina/actions/otter-1@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/otter-2.webp",
+      "sourceWidth": 1448,
+      "sourceHeight": 1086,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 749626,
+          "path": "/art/retina/actions/otter-2@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1991016,
+          "path": "/art/retina/actions/otter-2@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/owl-0.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 705168,
+          "path": "/art/retina/actions/owl-0@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1832236,
+          "path": "/art/retina/actions/owl-0@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/owl-1.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 492836,
+          "path": "/art/retina/actions/owl-1@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1314160,
+          "path": "/art/retina/actions/owl-1@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/owl-2.webp",
+      "sourceWidth": 1261,
+      "sourceHeight": 1247,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 796312,
+          "path": "/art/retina/actions/owl-2@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 2069312,
+          "path": "/art/retina/actions/owl-2@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/peach-0.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 930108,
+          "path": "/art/retina/actions/peach-0@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 2452078,
+          "path": "/art/retina/actions/peach-0@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/peach-1.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 853156,
+          "path": "/art/retina/actions/peach-1@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 2206404,
+          "path": "/art/retina/actions/peach-1@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/peach-2.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 762096,
+          "path": "/art/retina/actions/peach-2@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 2005184,
+          "path": "/art/retina/actions/peach-2@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/squirrel-0.webp",
+      "sourceWidth": 1247,
+      "sourceHeight": 1261,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 821062,
+          "path": "/art/retina/actions/squirrel-0@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 2111060,
+          "path": "/art/retina/actions/squirrel-0@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/squirrel-1.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 648328,
+          "path": "/art/retina/actions/squirrel-1@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1651332,
+          "path": "/art/retina/actions/squirrel-1@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/squirrel-2.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 654436,
+          "path": "/art/retina/actions/squirrel-2@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1677596,
+          "path": "/art/retina/actions/squirrel-2@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/whale-0.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 813494,
+          "path": "/art/retina/actions/whale-0@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 2041698,
+          "path": "/art/retina/actions/whale-0@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/whale-1.webp",
+      "sourceWidth": 1301,
+      "sourceHeight": 1209,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 618034,
+          "path": "/art/retina/actions/whale-1@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1517240,
+          "path": "/art/retina/actions/whale-1@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/actions/whale-2.webp",
+      "sourceWidth": 1261,
+      "sourceHeight": 1247,
+      "alpha": true,
+      "columns": 4,
+      "rows": 4,
+      "cell1x": 352,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 1408,
+          "height": 1408,
+          "bytes": 636890,
+          "path": "/art/retina/actions/whale-2@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 2816,
+          "height": 2816,
+          "bytes": 1608266,
+          "path": "/art/retina/actions/whale-2@2x.webp"
+        }
+      ]
+    },
+    {
       "source": "/art/chudik-evolution.png",
       "sourceWidth": 2172,
       "sourceHeight": 724,
@@ -284,6 +1220,32 @@
           "height": 1152,
           "bytes": 119314,
           "path": "/art/retina/motion/island@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/motion/sky-island.webp",
+      "sourceWidth": 1254,
+      "sourceHeight": 1254,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 576,
+      "upscaled": false,
+      "variants": [
+        {
+          "density": 1,
+          "width": 576,
+          "height": 576,
+          "bytes": 53610,
+          "path": "/art/retina/motion/sky-island@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 1152,
+          "height": 1152,
+          "bytes": 151432,
+          "path": "/art/retina/motion/sky-island@2x.webp"
         }
       ]
     },
@@ -596,6 +1558,318 @@
           "height": 3456,
           "bytes": 1001498,
           "path": "/art/retina/reactions/whale@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/badger.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 24450,
+          "path": "/art/retina/portraits/badger@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 64090,
+          "path": "/art/retina/portraits/badger@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/chudik.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 21158,
+          "path": "/art/retina/portraits/chudik@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 53790,
+          "path": "/art/retina/portraits/chudik@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/deer.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 26954,
+          "path": "/art/retina/portraits/deer@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 68872,
+          "path": "/art/retina/portraits/deer@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/griffin.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 22700,
+          "path": "/art/retina/portraits/griffin@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 58966,
+          "path": "/art/retina/portraits/griffin@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/hedgehog.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 26020,
+          "path": "/art/retina/portraits/hedgehog@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 67882,
+          "path": "/art/retina/portraits/hedgehog@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/luna.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 21324,
+          "path": "/art/retina/portraits/luna@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 55722,
+          "path": "/art/retina/portraits/luna@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/lynx.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 23262,
+          "path": "/art/retina/portraits/lynx@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 60128,
+          "path": "/art/retina/portraits/lynx@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/otter.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 26482,
+          "path": "/art/retina/portraits/otter@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 68510,
+          "path": "/art/retina/portraits/otter@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/owl.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 27970,
+          "path": "/art/retina/portraits/owl@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 72150,
+          "path": "/art/retina/portraits/owl@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/peach.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 21754,
+          "path": "/art/retina/portraits/peach@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 55764,
+          "path": "/art/retina/portraits/peach@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/squirrel.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 24476,
+          "path": "/art/retina/portraits/squirrel@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 62464,
+          "path": "/art/retina/portraits/squirrel@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/whale.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 21166,
+          "path": "/art/retina/portraits/whale@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 52452,
+          "path": "/art/retina/portraits/whale@2x.webp"
         }
       ]
     }

@@ -13,7 +13,7 @@ function request(path, headers = []) {
 const health = request('/api/health');
 assert.equal(health.status,200); assert.equal(JSON.parse(health.body).ok,true);
 const page = request('/');assert.equal(page.status,200);assert.match(page.body,/Чудозвери/);
-for (const asset of ['/art/chudik-evolution.png','/art/creatures-gallery.png']) {
+for (const asset of ['/art/retina/chudik-evolution@2x.webp','/art/retina/actions/chudik-0@2x.webp','/art/retina/portraits/luna@2x.webp']) {
   const status = execFileSync('curl',['--silent','--show-error','--max-time','20','--output','/dev/null','--write-out','%{http_code}',new URL(asset,base).href],{encoding:'utf8'});
   assert.equal(status,'200');
 }
@@ -23,4 +23,4 @@ assert.equal(request('/api/game',['x-telegram-init-data: invalid']).status,401);
 if (base.hostname.endsWith('.chatgpt.site')) {
   assert.equal(request('/api/game',['oai-authenticated-user-id: security-smoke-test']).status,401);
 }
-console.log('PASS: health, page, both artwork files, anonymous/invalid Telegram access and Sites header isolation');
+console.log('PASS: health, page, Retina scene, animation and portrait files, anonymous/invalid Telegram access and Sites header isolation');
