@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
+import {artBackground} from '../lib/art-resolution';
 import {PetGallery} from '../components/pet-gallery';
 import {PetVisual,usePetReaction,type Reaction} from '../components/pet-reactions';
 import {Sparkles,Leaf,Home as HomeIcon,PawPrint,Gift,BookOpen,Heart,Carrot,Volleyball,Zap,Star,Coins,ChevronRight,Check,Lock,Moon} from 'lucide-react';
@@ -54,7 +55,7 @@ export default function Home(){
  const s=data?.state;const date=data?new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(data.serverTime):'';
  const disabled=busy||!s||!!pending.current;
  const stage=Math.min(2,Math.max(0,(s?.level??1)-1));
- const portraitStyle=stage===0?{backgroundImage:"url('/art/chudik-reactions.png')",backgroundSize:'300% 200%',backgroundPosition:'0% 0%'}:{backgroundImage:"url('/art/chudik-evolution.png')",backgroundSize:'300% 100%',backgroundPosition:`${stage*50}% center`};
+ const portraitStyle=stage===0?{backgroundImage:artBackground('/art/chudik-reactions.png'),backgroundSize:'300% 200%',backgroundPosition:'0% 0%'}:{backgroundImage:artBackground('/art/chudik-evolution.png'),backgroundSize:'300% 100%',backgroundPosition:`${stage*50}% center`};
  const tabs=[{id:'pet',label:'Остров',icon:HomeIcon},{id:'collection',label:'Питомцы',icon:PawPrint},{id:'gifts',label:'Подарки',icon:Gift},{id:'guide',label:'Как играть',icon:BookOpen}];
  const rewardCards=<><button className={'reward-card '+(s?.lastDaily===date?'claimed':'')} disabled={disabled||s?.lastDaily===date} onClick={()=>request('daily')}><span className="reward-art">🎁</span><span><small>КАЖДЫЙ ДЕНЬ</small><strong>Подарок острова</strong><span className="reward-description">+20 монет для новых чудес</span></span><span className="reward-arrow">{s?.lastDaily===date?<Check size={20}/>:<ChevronRight size={20}/>}</span></button><button className={'reward-card violet '+(s?.offerDone?'claimed':'')} disabled={disabled||s?.offerDone} onClick={()=>request('offer')}><span className="reward-art">🧪</span><span><small>ПЕРВОЕ ОТКРЫТИЕ</small><strong>Маленький эксперимент</strong><span className="reward-description">{s?.offerDone?'Выполнено · ты молодец!':'Тестовое задание · +15 монет'}</span></span><span className="reward-arrow">{s?.offerDone?<Check size={20}/>:<ChevronRight size={20}/>}</span></button></>;
  return <main className="app-shell">

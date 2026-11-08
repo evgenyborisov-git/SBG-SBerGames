@@ -1,6 +1,7 @@
 'use client';
 import {useEffect, useRef, useState} from 'react';
 import {ArrowLeft, ArrowRight, ChevronRight, Sparkles, X, Heart, Carrot, Volleyball, Moon} from 'lucide-react';
+import {artBackground} from '../lib/art-resolution';
 import {galleryBiomes, galleryPets} from '../lib/gallery';
 import {PetVisual, usePetReaction, type Reaction} from './pet-reactions';
 
@@ -8,7 +9,7 @@ const forms = ['baby', 'grown', 'guardian'] as const;
 const formLabels = ['Малыш', 'Подросший', 'Хранитель'];
 function portrait(index: number, stage: number) {
   return {
-    backgroundImage: `url('/art/guardians-chapter-${galleryPets[index].chapter}.webp')`,
+    backgroundImage: artBackground(`/art/guardians-chapter-${galleryPets[index].chapter}.webp`),
     backgroundSize: '300% 300%',
     backgroundPosition: `${stage * 50}% ${index % 3 * 50}%`,
   };

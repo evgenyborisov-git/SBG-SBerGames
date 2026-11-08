@@ -1,5 +1,6 @@
 'use client';
 import {useEffect, useRef, useState} from 'react';
+import {artBackground, artPreloadUrl} from '../lib/art-resolution';
 import {affectionMotion, idleMotion, sampleMotion} from '../lib/chudik-motion';
 
 const loaded = new Map<string, Promise<void>>();
@@ -33,11 +34,12 @@ export function ChudikMotion({stage, reaction, sequence}: {
   const [frame, setFrame] = useState(0);
   const clock = useRef({key: '', start: 0});
   const safeStage = Math.min(2, Math.max(0, stage));
-  const src = `/art/motion/chudik-${safeStage}.webp`;
+  const source = `/art/motion/chudik-${safeStage}.webp`;
+  const src = artPreloadUrl(source);
   const ready = readySrc === src;
   useEffect(() => {
     let active = true;
-    void Promise.all([loadImage(src), loadImage('/art/motion/island.webp')]).then(() => {
+    void Promise.all([loadImage(src), loadImage(artPreloadUrl('/art/motion/island.webp'))]).then(() => {
       if (active) setReadySrc(src);
     }).catch(() => {}); // Keep the existing illustrated reaction as fallback.
     return () => {active = false;};
@@ -72,6 +74,6 @@ export function ChudikMotion({stage, reaction, sequence}: {
   return <span ref={element} className={'chudik-motion' + (showing ? ' is-ready' : '') + (showing && visible && inView && !reduced ? ' is-running' : '')}>
     <span className="pet-frame chudik-backdrop"/>
     <span className="chudik-shadow"/>
-    <span className={`chudik-actor age-${safeStage}`} style={{backgroundImage: `url('${src}')`, backgroundPosition: `${frame % 4 * 100 / 3}% ${Math.floor(frame / 4) * 100 / 3}%`}}/>
+    <span className={`chudik-actor age-${safeStage}`} style={{backgroundImage: artBackground(source), backgroundPosition: `${frame % 4 * 100 / 3}% ${Math.floor(frame / 4) * 100 / 3}%`}}/>
   </span>;
 }

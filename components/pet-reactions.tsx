@@ -1,6 +1,7 @@
 'use client';
 import {useEffect, useRef, useState, type CSSProperties} from 'react';
 import type {galleryPets} from '../lib/gallery';
+import {artBackground, artPreloadUrl} from '../lib/art-resolution';
 import {ChudikMotion} from './chudik-motion';
 
 type PetId = typeof galleryPets[number]['id'];
@@ -21,7 +22,7 @@ function preload(petId: PetId) {
     }
     image.onload = () => finish();
     image.onerror = () => finish(new Error('image unavailable'));
-    image.src = `/art/reactions/${petId}.webp`;
+    image.src = artPreloadUrl(`/art/reactions/${petId}.webp`);
   });
   cached.set(petId, task);
   void task.catch(() => {if (cached.get(petId) === task) cached.delete(petId);});
@@ -69,7 +70,7 @@ export function PetVisual({petId, stage, reaction, sequence, idleStyle}: {
   return <span className="pet-visual" aria-hidden="true">
     <span className="pet-frame pet-idle-frame" style={idleStyle}/>
     {[0, 1, 2, 3].map(column => <span key={column} className={'pet-frame pet-reaction-frame' + (reaction !== 0 && columns[reaction] === column ? ' is-visible' : '')} style={{
-      backgroundImage: `url('/art/reactions/${petId}.webp')`,
+      backgroundImage: artBackground(`/art/reactions/${petId}.webp`),
       backgroundSize: '400% 300%',
       backgroundPosition: `${column * 100 / 3}% ${Math.min(2, Math.max(0, stage)) * 50}%`,
     }}/>)}
