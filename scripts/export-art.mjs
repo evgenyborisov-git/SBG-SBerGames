@@ -5,7 +5,8 @@ import sharp from 'sharp';
 
 const root = path.resolve('public/art');
 const output = path.join(root, 'retina');
-const catalog = [];
+const onlyPrefix = process.argv[2];
+const catalog = onlyPrefix ? JSON.parse(await fs.readFile(path.join(output, 'manifest.json'), 'utf8')).images.filter(item => !item.source.startsWith('/art/' + onlyPrefix)) : [];
 async function visit(directory) {
   for (const entry of await fs.readdir(directory, {withFileTypes: true})) {
     if (entry.name === 'retina') continue;
@@ -13,8 +14,10 @@ async function visit(directory) {
     if (entry.isDirectory()) {await visit(absolute); continue;}
     if (!/\.(png|webp)$/.test(entry.name)) continue;
     const relative = path.relative(root, absolute);
+    if (onlyPrefix && !relative.startsWith(onlyPrefix)) continue;
     let columns = 1, rows = 1, cell = 576;
-    if (relative === 'chudik-evolution.png') columns = 3;
+    if (relative.startsWith('portraits/')) cell = 384;
+    else if (relative === 'chudik-evolution.png') columns = 3;
     else if (['chudik-reactions.png', 'creatures-gallery.png'].includes(relative)) {columns = 3; rows = 2;}
     else if (relative.startsWith('guardians-')) {columns = 3; rows = 3;}
     else if (relative.startsWith('reactions/')) {columns = 4; rows = 3;}

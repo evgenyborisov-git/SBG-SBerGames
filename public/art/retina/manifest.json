@@ -1560,6 +1560,318 @@
           "path": "/art/retina/reactions/whale@2x.webp"
         }
       ]
+    },
+    {
+      "source": "/art/portraits/badger.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 24450,
+          "path": "/art/retina/portraits/badger@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 64090,
+          "path": "/art/retina/portraits/badger@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/chudik.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 21158,
+          "path": "/art/retina/portraits/chudik@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 53790,
+          "path": "/art/retina/portraits/chudik@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/deer.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 26954,
+          "path": "/art/retina/portraits/deer@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 68872,
+          "path": "/art/retina/portraits/deer@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/griffin.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 22700,
+          "path": "/art/retina/portraits/griffin@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 58966,
+          "path": "/art/retina/portraits/griffin@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/hedgehog.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 26020,
+          "path": "/art/retina/portraits/hedgehog@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 67882,
+          "path": "/art/retina/portraits/hedgehog@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/luna.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 21324,
+          "path": "/art/retina/portraits/luna@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 55722,
+          "path": "/art/retina/portraits/luna@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/lynx.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 23262,
+          "path": "/art/retina/portraits/lynx@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 60128,
+          "path": "/art/retina/portraits/lynx@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/otter.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 26482,
+          "path": "/art/retina/portraits/otter@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 68510,
+          "path": "/art/retina/portraits/otter@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/owl.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 27970,
+          "path": "/art/retina/portraits/owl@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 72150,
+          "path": "/art/retina/portraits/owl@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/peach.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 21754,
+          "path": "/art/retina/portraits/peach@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 55764,
+          "path": "/art/retina/portraits/peach@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/squirrel.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 24476,
+          "path": "/art/retina/portraits/squirrel@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 62464,
+          "path": "/art/retina/portraits/squirrel@2x.webp"
+        }
+      ]
+    },
+    {
+      "source": "/art/portraits/whale.webp",
+      "sourceWidth": 418,
+      "sourceHeight": 418,
+      "alpha": false,
+      "columns": 1,
+      "rows": 1,
+      "cell1x": 384,
+      "upscaled": true,
+      "variants": [
+        {
+          "density": 1,
+          "width": 384,
+          "height": 384,
+          "bytes": 21166,
+          "path": "/art/retina/portraits/whale@1x.webp"
+        },
+        {
+          "density": 2,
+          "width": 768,
+          "height": 768,
+          "bytes": 52452,
+          "path": "/art/retina/portraits/whale@2x.webp"
+        }
+      ]
     }
   ]
 }

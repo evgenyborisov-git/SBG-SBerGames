@@ -18,4 +18,5 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run typecheck
+      - run: node scripts/check-action-art.mjs
       - run: npm run build

@@ -1,4 +1,4 @@
-// Display-only catalog. No ownership, prices or unlock rules.
+// Shared visual catalog. All twelve pets use the same saved profile progression.
 export const galleryPets = [
   {
     "id": "chudik",

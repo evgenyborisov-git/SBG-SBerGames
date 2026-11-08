@@ -18,3 +18,13 @@ test('every published artwork displays and preloads the same 2x file regardless 
     assert.ok(fs.existsSync(`public${source}`));
   }
 });
+
+test('every selectable pet has three Retina motion forms and a lightweight Retina thumbnail', async () => {
+  const {petIds} = await import('../lib/game/pets.ts');
+  const {galleryPets} = await import('../lib/gallery.ts');
+  assert.deepEqual(galleryPets.map(pet => pet.id), [...petIds]);
+  for (const id of petIds) {
+    assert.ok(fs.existsSync(`public${artPreloadUrl(`/art/portraits/${id}.webp`)}`), id);
+    for (const stage of [0, 1, 2]) assert.ok(fs.existsSync(`public${artPreloadUrl(`/art/actions/${id}-${stage}.webp`)}`), `${id}:${stage}`);
+  }
+});
