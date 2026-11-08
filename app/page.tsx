@@ -8,10 +8,11 @@ type Snapshot={state:{coins:number;energy:number;xp:number;level:number;lastDail
 declare global {interface Window{Telegram?:{WebApp:{initData:string;ready:()=>void;expand:()=>void;HapticFeedback?:{notificationOccurred:(type:string)=>void}}}}}
 export default function Home(){
  const [data,setData]=useState<Snapshot|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('Подключаемся к лаборатории…'),[error,setError]=useState(false),[tab,setTab]=useState('pet');
- const emotion=usePetReaction('chudik');
+ const stage=Math.min(2,Math.max(0,(data?.state.level??1)-1));
+ const emotion=usePetReaction('chudik',stage);
  const reaction=emotion.reaction;
  const [petLine,setPetLine]=useState('Как хорошо, что ты здесь!');
- function react(index:Reaction,line:string){emotion.trigger(index);setPetLine(line);}
+ function react(index:Reaction,line:string,nextStage=stage){emotion.trigger(index,nextStage);setPetLine(line);}
  useEffect(()=>{if(reaction===0)setPetLine('Как хорошо, что ты здесь!');},[reaction]);
  const [sdkError,setSdkError]=useState(false);
  const pending=useRef<{action:string;key:string}|null>(null),lock=useRef(false),initData=useRef('');
@@ -24,7 +25,7 @@ export default function Home(){
    const result=await response.json().catch(()=>{throw new Error('Сервер не ответил. Проверь соединение и повтори запрос');}) as Snapshot & {message?:string};
    if(!response.ok){if(response.status<500)pending.current=null;if(response.status===401)setData(null);throw new Error(result.message||'Не удалось связаться с сервером');}
    if(action)pending.current=null;setData(result);setMessage(result.message||'Прогресс сохранён на сервере');
-   if(action)react(action==='feed'?1:action==='play'?2:5,action==='feed'?'Хрум-хрум… моя любимая морковка!':action==='play'?'Ещё раз! Лови солнечный мячик!':'Ура! Сегодня случилось маленькое чудо!');
+   if(action)react(action==='feed'?1:action==='play'?2:5,action==='feed'?'Хрум-хрум… моя любимая морковка!':action==='play'?'Ещё раз! Лови солнечный мячик!':'Ура! Сегодня случилось маленькое чудо!',Math.min(2,Math.max(0,result.state.level-1)));
    // Haptics are optional; a device error must not mark a saved action failed.
    if(action){try{window.Telegram?.WebApp.HapticFeedback?.notificationOccurred('success');}catch{}}
   }catch(e){setError(true);setMessage(e instanceof Error&&e.name!=='TimeoutError'&&e.name!=='TypeError'?e.message:'Нет соединения. Проверь интернет и повтори запрос');}
@@ -54,7 +55,6 @@ export default function Home(){
  },[]);
  const s=data?.state;const date=data?new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(data.serverTime):'';
  const disabled=busy||!s||!!pending.current;
- const stage=Math.min(2,Math.max(0,(s?.level??1)-1));
  const portraitStyle=stage===0?{backgroundImage:artBackground('/art/chudik-reactions.png'),backgroundSize:'300% 200%',backgroundPosition:'0% 0%'}:{backgroundImage:artBackground('/art/chudik-evolution.png'),backgroundSize:'300% 100%',backgroundPosition:`${stage*50}% center`};
  const tabs=[{id:'pet',label:'Остров',icon:HomeIcon},{id:'collection',label:'Питомцы',icon:PawPrint},{id:'gifts',label:'Подарки',icon:Gift},{id:'guide',label:'Как играть',icon:BookOpen}];
  const rewardCards=<><button className={'reward-card '+(s?.lastDaily===date?'claimed':'')} disabled={disabled||s?.lastDaily===date} onClick={()=>request('daily')}><span className="reward-art">🎁</span><span><small>КАЖДЫЙ ДЕНЬ</small><strong>Подарок острова</strong><span className="reward-description">+20 монет для новых чудес</span></span><span className="reward-arrow">{s?.lastDaily===date?<Check size={20}/>:<ChevronRight size={20}/>}</span></button><button className={'reward-card violet '+(s?.offerDone?'claimed':'')} disabled={disabled||s?.offerDone} onClick={()=>request('offer')}><span className="reward-art">🧪</span><span><small>ПЕРВОЕ ОТКРЫТИЕ</small><strong>Маленький эксперимент</strong><span className="reward-description">{s?.offerDone?'Выполнено · ты молодец!':'Тестовое задание · +15 монет'}</span></span><span className="reward-arrow">{s?.offerDone?<Check size={20}/>:<ChevronRight size={20}/>}</span></button></>;

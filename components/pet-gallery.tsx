@@ -22,7 +22,7 @@ function PetDetails({initialIndex, onClose, onVisitChudik}: {
   const [index, setIndex] = useState(initialIndex);
   const [stage, setStage] = useState(0);
   const pet = galleryPets[index];
-  const emotion = usePetReaction(pet.id);
+  const emotion = usePetReaction(pet.id, stage);
   const actions = [
     {reaction: 4 as Reaction, label: 'Погладить', icon: Heart},
     {reaction: 1 as Reaction, label: 'Угостить', icon: Carrot},
