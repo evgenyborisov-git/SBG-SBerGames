@@ -1,4 +1,5 @@
 import type {Metadata,Viewport} from 'next';
+import './fonts.css';
 import './globals.css';
 export const viewport:Viewport={width:'device-width',initialScale:1,viewportFit:'cover',themeColor:'#f1f7ed'};
 export const metadata:Metadata={title:'СберСеллер · Чудозвери',description:'Заботься о Чудике, открывай новые этапы и собирай маленькие чудеса'};
