@@ -1,6 +1,7 @@
 'use client';
 import {useEffect, useRef, useState, type CSSProperties} from 'react';
 import type {galleryPets} from '../lib/gallery';
+import {ChudikMotion} from './chudik-motion';
 
 type PetId = typeof galleryPets[number]['id'];
 export type Reaction = 0 | 1 | 2 | 3 | 4 | 5;
@@ -60,7 +61,7 @@ export function usePetReaction(petId: PetId) {
   return {...state, reaction: state.petId === petId ? state.reaction : 0 as Reaction, trigger, reset};
 }
 
-/** The cropped image layers never shrink or move; only decorative particles move. */
+/** Scene backgrounds stay fixed; Chudik uses a separate transparent actor. */
 export function PetVisual({petId, stage, reaction, sequence, idleStyle}: {
   petId: PetId; stage: number; reaction: Reaction; sequence: number; idleStyle: CSSProperties;
 }) {
@@ -72,6 +73,7 @@ export function PetVisual({petId, stage, reaction, sequence, idleStyle}: {
       backgroundSize: '400% 300%',
       backgroundPosition: `${column * 100 / 3}% ${Math.min(2, Math.max(0, stage)) * 50}%`,
     }}/>)}
+    {petId === 'chudik' && <ChudikMotion stage={stage} reaction={reaction} sequence={sequence}/>}
     {reaction !== 0 && <span key={`${petId}-${sequence}`} className={`pet-emotion-particles emotion-${reaction}`}>
       {symbols.map((symbol, index) => <i key={index} style={{left: `${25 + index * 17}%`, animationDelay: `${index * .18}s`}}>{symbol}</i>)}
     </span>}
