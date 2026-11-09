@@ -116,6 +116,8 @@ test('pet choice preserves progression and migrates existing profiles without re
  for(const petId of petIds){
   const selected=transition(earned,`select:${petId}`,selectionTime+8000);
   assert.equal(selected.petId,petId);
+  assert.throws(()=>transition(selected,'select:chudik',selectionTime+8000),e=>e.code==='pet_already_selected');
+  assert.throws(()=>transition(selected,`select:${petId}`,selectionTime+8000),e=>e.code==='pet_already_selected');
   const {petId:ignored,...progress}=selected;
   const {petId:old,...expected}=restore(earned,selectionTime+8000);
   assert.deepEqual(progress,expected);
@@ -125,6 +127,7 @@ test('pet choice preserves progression and migrates existing profiles without re
  const legacy={...earned};delete legacy.petId;
  assert.equal(restore(legacy,selectionTime+8000).petId,'chudik');
  assert.equal(restore(legacy,selectionTime+8000).level,2);
+ assert.throws(()=>transition(legacy,'select:luna',selectionTime+8000),e=>e.code==='pet_already_selected');
  assert.equal(initial(selectionTime).petId,null);
  assert.throws(()=>transition(earned,'select:unkselectionTimen',selectionTime),/питомца/);
 });
@@ -140,11 +143,16 @@ test('D1 pet selection survives rereads and retries, isolates profiles and races
   assert.equal((await getState(db,'pet-a',now)).state.petId,'luna');
   assert.equal((await getState(db,'pet-b',now)).state.petId,null);
   await assert.rejects(act(db,'pet-a','choose-luna','select:owl',now),/другого действия/);
-  await Promise.all([act(db,'pet-a','choose-owl','select:owl',now+2000),act(db,'pet-a','play-with-friend','play',now+2000)]);
+  const concurrent=await Promise.allSettled([act(db,'pet-a','choose-owl','select:owl',now+2000),act(db,'pet-a','play-with-friend','play',now+2000)]);
+  assert.equal(concurrent[0].status,'rejected');assert.equal(concurrent[0].reason.code,'pet_already_selected');assert.equal(concurrent[1].status,'fulfilled');
   const saved=await getState(db,'pet-a',now+2000);
-  assert.equal(saved.state.petId,'owl');assert.equal(saved.state.coins,53);assert.equal(saved.state.xp,25);assert.equal(saved.state.energy,55);
+  assert.equal(saved.state.petId,'luna');assert.equal(saved.state.coins,53);assert.equal(saved.state.xp,25);assert.equal(saved.state.energy,55);
+  const firstChoices=await Promise.allSettled([act(db,'pet-c','first-luna','select:luna',now),act(db,'pet-c','first-owl','select:owl',now)]);
+  assert.equal(firstChoices.filter(x=>x.status==='fulfilled').length,1);
+  assert.equal(firstChoices.find(x=>x.status==='rejected').reason.code,'pet_already_selected');
+  assert.equal((await getState(db,'pet-c',now)).revision,1);
   const oldRetry=await act(db,'pet-a','choose-luna','select:luna',now+2000);
-  assert.equal(oldRetry.replayed,true);assert.equal(oldRetry.state.petId,'owl');assert.equal(oldRetry.revision,saved.revision);
+  assert.equal(oldRetry.replayed,true);assert.equal(oldRetry.state.petId,'luna');assert.equal(oldRetry.revision,saved.revision);
  }finally{await mf.dispose()}
 });
 
@@ -162,9 +170,10 @@ test('HTTP pet selection validates IDs, persists choice and keeps rewards shared
   response=await call({action:'select_pet',petId:'whale'});assert.equal((await response.json()).replayed,true);
   assert.equal((await call({action:'select_pet',petId:'lynx'})).status,409);
   assert.equal((await call({action:'daily'},'daily-operation-0001')).status,200);
-  response=await call({action:'select_pet',petId:'lynx'},'choose-operation-0002');const changed=await response.json();assert.equal(changed.state.petId,'lynx');assert.equal(changed.state.coins,70);
+  response=await call({action:'select_pet',petId:'lynx'},'choose-operation-0002');assert.equal(response.status,409);assert.equal((await response.json()).error,'pet_already_selected');
+  assert.equal((await call({action:'select_pet',petId:'whale'},'choose-operation-0003')).status,409);
   assert.equal((await call({action:'daily'},'daily-operation-0002')).status,409);
-  assert.equal((await (await call(null,undefined,12345,'GET')).json()).state.petId,'lynx');
+  const unchanged=await (await call(null,undefined,12345,'GET')).json();assert.equal(unchanged.state.petId,'whale');assert.equal(unchanged.state.coins,70);
   assert.equal((await (await call(null,undefined,54321,'GET')).json()).state.petId,null);
  }finally{await mf.dispose()}
 });

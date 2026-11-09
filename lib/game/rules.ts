@@ -17,6 +17,7 @@ export function transition(state:State, action:Action, now:number){
  if(action.startsWith('select:')){
   const petId=action.slice(7);
   if(!isPetId(petId))throw new GameError('invalid_pet','Такого питомца нет в атласе',400);
+  if(s.petId!==null)throw new GameError('pet_already_selected','Первый друг уже выбран. Остальных чудозверей ты сможешь собрать позже');
   s.petId=petId;
   return s;
  }
