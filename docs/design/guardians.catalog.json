@@ -1,0 +1,519 @@
+{
+  "schemaVersion": 1,
+  "status": "design_proposal_not_runtime",
+  "createdAtMoscow": "2026-11-08",
+  "sourceCommit": "e37a5e8c9a2dd414c76bbb1fd7e6d9d725821d85",
+  "countRule": "distinct_owned_species",
+  "stages": [
+    "baby",
+    "grown",
+    "guardian"
+  ],
+  "economyStatus": "prices_and_resource_income_pending_simulation",
+  "leagueThresholds": [
+    3,
+    6,
+    12
+  ],
+  "pets": [
+    {
+      "id": "chudik",
+      "name": "Чудик",
+      "species": "Мятный лисёнок",
+      "chapter": 1,
+      "biome": "Лесная поляна",
+      "personality": "Любопытный и ласковый; первым встречает игрока.",
+      "forms": {
+        "baby": "Малыш Чудик",
+        "grown": "Лесной Чудик",
+        "guardian": "Крылатый Чудик"
+      },
+      "artBrief": "Мятная шерсть, кремовая грудка, уши-листья, росток на голове; в финале прозрачные крылья.",
+      "reactionBrief": "Хрустит морковкой / ловит солнечный мяч / щурится от ласки / сворачивается хвостом.",
+      "unlock": {
+        "allOf": [],
+        "minOwnedSpecies": 0,
+        "costKey": null,
+        "freeStarter": true
+      },
+      "evolution": {
+        "grown": {
+          "requiredLevel": 2,
+          "costKey": null
+        },
+        "guardian": {
+          "requiredLevel": 3,
+          "costKey": "evolution.guardian"
+        }
+      },
+      "assets": {
+        "status": "existing_evolution_and_reactions",
+        "existingGalleryIndex": 0
+      }
+    },
+    {
+      "id": "luna",
+      "name": "Луми",
+      "species": "Лунный зайчик",
+      "chapter": 1,
+      "biome": "Лесная поляна",
+      "personality": "Тихий мечтатель; бережёт добрые сны.",
+      "forms": {
+        "baby": "Лунный малыш",
+        "grown": "Лунный прыгун",
+        "guardian": "Хранитель снов"
+      },
+      "artBrief": "Сиренево-белая шерсть, длинные уши, лунная отметина; в финале светящаяся лунная вуаль.",
+      "reactionBrief": "Жуёт листик / прыгает за луной / складывает уши сердцем / спит в ушах-одеяле.",
+      "unlock": {
+        "allOf": [
+          {
+            "petId": "chudik",
+            "minStage": "grown"
+          }
+        ],
+        "minOwnedSpecies": 1,
+        "costKey": "unlock.chapter1",
+        "freeStarter": false
+      },
+      "evolution": {
+        "grown": {
+          "requiredLevel": 2,
+          "costKey": null
+        },
+        "guardian": {
+          "requiredLevel": 3,
+          "costKey": "evolution.guardian"
+        }
+      },
+      "assets": {
+        "status": "existing_gallery_concept",
+        "existingGalleryIndex": 1
+      }
+    },
+    {
+      "id": "peach",
+      "name": "Искорка",
+      "species": "Персиковый дракон",
+      "chapter": 1,
+      "biome": "Лесная поляна",
+      "personality": "Смелый непоседа; учится управлять своими искрами.",
+      "forms": {
+        "baby": "Персиковый малыш",
+        "grown": "Тёплая искорка",
+        "guardian": "Хранитель огонька"
+      },
+      "artBrief": "Персиковая чешуя, маленькие рожки и крылья; огонь похож на безопасные золотые искры.",
+      "reactionBrief": "Печёт морковку дыханием / гоняет искру / прижимает крылья / дремлет у тёплого камня.",
+      "unlock": {
+        "allOf": [
+          {
+            "petId": "chudik",
+            "minStage": "grown"
+          }
+        ],
+        "minOwnedSpecies": 1,
+        "costKey": "unlock.chapter1",
+        "freeStarter": false
+      },
+      "evolution": {
+        "grown": {
+          "requiredLevel": 2,
+          "costKey": null
+        },
+        "guardian": {
+          "requiredLevel": 3,
+          "costKey": "evolution.guardian"
+        }
+      },
+      "assets": {
+        "status": "existing_gallery_concept",
+        "existingGalleryIndex": 2
+      }
+    },
+    {
+      "id": "otter",
+      "name": "Капля",
+      "species": "Облачная выдра",
+      "chapter": 2,
+      "biome": "Сад и водопад",
+      "personality": "Игривый исследователь; находит чудеса в каждой капле.",
+      "forms": {
+        "baby": "Капелька",
+        "grown": "Облачная выдра",
+        "guardian": "Хранитель водопада"
+      },
+      "artBrief": "Голубоватая шерсть, округлая мордочка, плавный хвост; финальная водяная лента вокруг лап.",
+      "reactionBrief": "Ловит угощение лапами / жонглирует пузырями / кувыркается / спит на облачке.",
+      "unlock": {
+        "allOf": [
+          {
+            "petId": "luna",
+            "minStage": "grown"
+          }
+        ],
+        "minOwnedSpecies": 3,
+        "costKey": "unlock.chapter2",
+        "freeStarter": false
+      },
+      "evolution": {
+        "grown": {
+          "requiredLevel": 2,
+          "costKey": null
+        },
+        "guardian": {
+          "requiredLevel": 3,
+          "costKey": "evolution.guardian"
+        }
+      },
+      "assets": {
+        "status": "existing_gallery_concept",
+        "existingGalleryIndex": 3
+      }
+    },
+    {
+      "id": "owl",
+      "name": "Лучик",
+      "species": "Солнечный совёнок",
+      "chapter": 2,
+      "biome": "Сад и водопад",
+      "personality": "Добрый наблюдатель; замечает то, что остальные пропускают.",
+      "forms": {
+        "baby": "Солнечный птенец",
+        "grown": "Золотое пёрышко",
+        "guardian": "Хранитель рассвета"
+      },
+      "artBrief": "Золотистое оперение, крупные глаза, круглый силуэт; финальная корона из перьев-лучей.",
+      "reactionBrief": "Клюёт зёрнышко / ловит солнечный блик / наклоняет голову / прячет клюв в крыло.",
+      "unlock": {
+        "allOf": [
+          {
+            "petId": "peach",
+            "minStage": "grown"
+          }
+        ],
+        "minOwnedSpecies": 3,
+        "costKey": "unlock.chapter2",
+        "freeStarter": false
+      },
+      "evolution": {
+        "grown": {
+          "requiredLevel": 2,
+          "costKey": null
+        },
+        "guardian": {
+          "requiredLevel": 3,
+          "costKey": "evolution.guardian"
+        }
+      },
+      "assets": {
+        "status": "existing_gallery_concept",
+        "existingGalleryIndex": 4
+      }
+    },
+    {
+      "id": "deer",
+      "name": "Флора",
+      "species": "Цветочный оленёнок",
+      "chapter": 2,
+      "biome": "Сад и водопад",
+      "personality": "Заботливая садовница; оставляет цветы на своих тропинках.",
+      "forms": {
+        "baby": "Цветочный малыш",
+        "grown": "Лесной бутон",
+        "guardian": "Хранитель цветения"
+      },
+      "artBrief": "Светлая шерсть, пятнышки-лепестки, веточки-рожки; финальные рога с цветами.",
+      "reactionBrief": "Ест бутон / скачет по цветам / раскрывает цветок / ложится в лепестки.",
+      "unlock": {
+        "allOf": [
+          {
+            "petId": "luna",
+            "minStage": "grown"
+          },
+          {
+            "petId": "peach",
+            "minStage": "grown"
+          }
+        ],
+        "minOwnedSpecies": 3,
+        "costKey": "unlock.chapter2",
+        "freeStarter": false
+      },
+      "evolution": {
+        "grown": {
+          "requiredLevel": 2,
+          "costKey": null
+        },
+        "guardian": {
+          "requiredLevel": 3,
+          "costKey": "evolution.guardian"
+        }
+      },
+      "assets": {
+        "status": "existing_gallery_concept",
+        "existingGalleryIndex": 5
+      }
+    },
+    {
+      "id": "hedgehog",
+      "name": "Мохик",
+      "species": "Моховой ёжик",
+      "chapter": 3,
+      "biome": "Скрытые тропы",
+      "personality": "Немного застенчивый коллекционер; собирает лесные сокровища.",
+      "forms": {
+        "baby": "Моховой клубочек",
+        "grown": "Хранитель тропинки",
+        "guardian": "Хранитель рощи"
+      },
+      "artBrief": "Округлый зелёно-коричневый силуэт; мягкие иголки-мох, пара грибочков; финальная мини-роща на спине.",
+      "reactionBrief": "Держит ягодку / катится клубочком / выглядывает из мха / прячется в листьях.",
+      "unlock": {
+        "allOf": [
+          {
+            "petId": "otter",
+            "minStage": "grown"
+          }
+        ],
+        "minOwnedSpecies": 6,
+        "costKey": "unlock.chapter3",
+        "freeStarter": false
+      },
+      "evolution": {
+        "grown": {
+          "requiredLevel": 2,
+          "costKey": null
+        },
+        "guardian": {
+          "requiredLevel": 3,
+          "costKey": "evolution.guardian"
+        }
+      },
+      "assets": {
+        "status": "brief_only",
+        "existingGalleryIndex": null
+      }
+    },
+    {
+      "id": "squirrel",
+      "name": "Шурша",
+      "species": "Янтарная белочка",
+      "chapter": 3,
+      "biome": "Скрытые тропы",
+      "personality": "Быстрая выдумщица; мастер маленьких сюрпризов.",
+      "forms": {
+        "baby": "Янтарный малыш",
+        "grown": "Ловкая шишка",
+        "guardian": "Хранитель янтаря"
+      },
+      "artBrief": "Рыже-медовая шерсть, очень большой хвост-завиток, янтарная подвеска; финальный хвост с искорками.",
+      "reactionBrief": "Грызёт орешек / ловит шишку / обнимает хвост / спит в хвосте-гнезде.",
+      "unlock": {
+        "allOf": [
+          {
+            "petId": "owl",
+            "minStage": "grown"
+          }
+        ],
+        "minOwnedSpecies": 6,
+        "costKey": "unlock.chapter3",
+        "freeStarter": false
+      },
+      "evolution": {
+        "grown": {
+          "requiredLevel": 2,
+          "costKey": null
+        },
+        "guardian": {
+          "requiredLevel": 3,
+          "costKey": "evolution.guardian"
+        }
+      },
+      "assets": {
+        "status": "brief_only",
+        "existingGalleryIndex": null
+      }
+    },
+    {
+      "id": "badger",
+      "name": "Тиша",
+      "species": "Кристальный барсучок",
+      "chapter": 3,
+      "biome": "Скрытые тропы",
+      "personality": "Спокойный мастер; помогает друзьям находить дорогу.",
+      "forms": {
+        "baby": "Каменный малыш",
+        "grown": "Кристальный следопыт",
+        "guardian": "Хранитель пещер"
+      },
+      "artBrief": "Серо-кремовые полоски, короткие лапы, прозрачный кристальный гребень; финальные голубые грани на спине.",
+      "reactionBrief": "Держит корешок / собирает башенку / довольно топает / зарывается в мягкий мох.",
+      "unlock": {
+        "allOf": [
+          {
+            "petId": "deer",
+            "minStage": "grown"
+          }
+        ],
+        "minOwnedSpecies": 6,
+        "costKey": "unlock.chapter3",
+        "freeStarter": false
+      },
+      "evolution": {
+        "grown": {
+          "requiredLevel": 2,
+          "costKey": null
+        },
+        "guardian": {
+          "requiredLevel": 3,
+          "costKey": "evolution.guardian"
+        }
+      },
+      "assets": {
+        "status": "brief_only",
+        "existingGalleryIndex": null
+      }
+    },
+    {
+      "id": "whale",
+      "name": "Нимб",
+      "species": "Небесный китёнок",
+      "chapter": 4,
+      "biome": "Небесные острова",
+      "personality": "Неспешный путешественник; возит облака между островами.",
+      "forms": {
+        "baby": "Облачный малыш",
+        "grown": "Небесный пловец",
+        "guardian": "Хранитель небосвода"
+      },
+      "artBrief": "Сине-белый силуэт кита, маленькие плавники и звёздные веснушки; финальная полупрозрачная облачная мантия.",
+      "reactionBrief": "Ловит воздушную ягодку / пускает кольца / переворачивается животом / качается в облаках.",
+      "unlock": {
+        "allOf": [
+          {
+            "petId": "otter",
+            "minStage": "guardian"
+          },
+          {
+            "petId": "hedgehog",
+            "minStage": "grown"
+          }
+        ],
+        "minOwnedSpecies": 9,
+        "costKey": "unlock.chapter4",
+        "freeStarter": false
+      },
+      "evolution": {
+        "grown": {
+          "requiredLevel": 2,
+          "costKey": null
+        },
+        "guardian": {
+          "requiredLevel": 3,
+          "costKey": "evolution.guardian"
+        }
+      },
+      "assets": {
+        "status": "brief_only",
+        "existingGalleryIndex": null
+      }
+    },
+    {
+      "id": "lynx",
+      "name": "Сия",
+      "species": "Полярная рысь",
+      "chapter": 4,
+      "biome": "Небесные острова",
+      "personality": "Независимая, но преданная; освещает путь друзьям.",
+      "forms": {
+        "baby": "Снежный котёнок",
+        "grown": "Полярная искра",
+        "guardian": "Хранитель сияния"
+      },
+      "artBrief": "Белая шерсть, высокие уши с кисточками, голубые лапы; финальный шлейф северного сияния.",
+      "reactionBrief": "Ест снежную ягодку / ловит свет / мурчит и трётся щекой / прячет нос в лапы.",
+      "unlock": {
+        "allOf": [
+          {
+            "petId": "owl",
+            "minStage": "guardian"
+          },
+          {
+            "petId": "squirrel",
+            "minStage": "grown"
+          }
+        ],
+        "minOwnedSpecies": 9,
+        "costKey": "unlock.chapter4",
+        "freeStarter": false
+      },
+      "evolution": {
+        "grown": {
+          "requiredLevel": 2,
+          "costKey": null
+        },
+        "guardian": {
+          "requiredLevel": 3,
+          "costKey": "evolution.guardian"
+        }
+      },
+      "assets": {
+        "status": "brief_only",
+        "existingGalleryIndex": null
+      }
+    },
+    {
+      "id": "griffin",
+      "name": "Астра",
+      "species": "Звёздный грифон",
+      "chapter": 4,
+      "biome": "Небесные острова",
+      "personality": "Собирает друзей вместе; хранит историю всего острова.",
+      "forms": {
+        "baby": "Звёздный птенец",
+        "grown": "Юный грифон",
+        "guardian": "Хранитель созвездий"
+      },
+      "artBrief": "Львиные лапы, короткий клюв и мягкие перья; кремово-золотая палитра, в финале широкие крылья с созвездиями.",
+      "reactionBrief": "Ловит золотое зёрнышко / рисует звезду крылом / склоняет голову / укрывается крыльями.",
+      "unlock": {
+        "allOf": [
+          {
+            "petId": "deer",
+            "minStage": "guardian"
+          },
+          {
+            "petId": "badger",
+            "minStage": "grown"
+          },
+          {
+            "petId": "whale",
+            "minStage": "baby"
+          },
+          {
+            "petId": "lynx",
+            "minStage": "baby"
+          }
+        ],
+        "minOwnedSpecies": 11,
+        "costKey": "unlock.chapter4",
+        "freeStarter": false
+      },
+      "evolution": {
+        "grown": {
+          "requiredLevel": 2,
+          "costKey": null
+        },
+        "guardian": {
+          "requiredLevel": 3,
+          "costKey": "evolution.guardian"
+        }
+      },
+      "assets": {
+        "status": "brief_only",
+        "existingGalleryIndex": null
+      }
+    }
+  ]
+}
