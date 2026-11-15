@@ -1,5 +1,4 @@
 'use client';
-// ChatGPT GitHub smoke test (2026-11-15): no functional or visual changes.
 import {useEffect,useRef,useState} from 'react';
 type Snapshot={state:{coins:number;energy:number;xp:number;level:number;lastDaily:string;offerDone:boolean;collection:string[]};revision:number;mode:string;serverTime:number;message?:string};
 declare global {interface Window{Telegram?:{WebApp:{initData:string;ready:()=>void;expand:()=>void;HapticFeedback?:{notificationOccurred:(type:string)=>void}}}}}
