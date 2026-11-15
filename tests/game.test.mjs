@@ -118,13 +118,13 @@ test('pet choice preserves progression and migrates existing profiles without re
   assert.equal(selected.petId,petId);
   assert.throws(()=>transition(selected,'select:chudik',selectionTime+8000),e=>e.code==='pet_already_selected');
   assert.throws(()=>transition(selected,`select:${petId}`,selectionTime+8000),e=>e.code==='pet_already_selected');
-  const {petId:ignored,...progress}=selected;
-  const {petId:old,...expected}=restore(earned,selectionTime+8000);
+  const {petId:ignored,journey:ignoredJourney,...progress}=selected;
+  const {petId:old,journey:oldJourney,...expected}=restore(earned,selectionTime+8000);
   assert.deepEqual(progress,expected);
   assert.throws(()=>transition(selected,'daily',selectionTime+8000),/уже/);
   assert.throws(()=>transition(selected,'offer',selectionTime+8000),/уже/);
  }
- const legacy={...earned};delete legacy.petId;
+ const legacy={...earned};delete legacy.petId;delete legacy.journey;
  assert.equal(restore(legacy,selectionTime+8000).petId,'chudik');
  assert.equal(restore(legacy,selectionTime+8000).level,2);
  assert.throws(()=>transition(legacy,'select:luna',selectionTime+8000),e=>e.code==='pet_already_selected');
@@ -176,4 +176,87 @@ test('HTTP pet selection validates IDs, persists choice and keeps rewards shared
   const unchanged=await (await call(null,undefined,12345,'GET')).json();assert.equal(unchanged.state.petId,'whale');assert.equal(unchanged.state.coins,70);
   assert.equal((await (await call(null,undefined,54321,'GET')).json()).state.petId,null);
  }finally{await mf.dispose()}
+});
+
+function matureChapter(pet='chudik'){
+ let s=transition(initial(now),'select:'+pet,now);s.level=2;s.xp=35;s.collection.push('🌱 Первый росток');s=restore(s,now);s.journey.owned[pet]={level:s.level,xp:s.xp,collection:[...s.collection]};s.journey.crystals=100;return s;
+}
+test('chapter migration is additive and repeatable for every starter; forms are not species',()=>{
+ for(const pet of require('../.sites-runtime/test-build/pets.js').petIds){
+  const old={...initial(now),petId:pet,level:8,xp:45,coins:123,lastDaily:day(now),offerDone:true,collection:['egg','grown','guardian']};
+  const s=restore(old,now);assert.equal(Object.keys(s.journey.owned).length,1);assert.equal(s.journey.owned[pet].level,8);assert.equal(s.journey.firstPetId,pet);assert.equal(s.coins,123);assert.equal(s.journey.crystals,0);assert.deepEqual(restore(s,now),s);assert.deepEqual(old.collection,['egg','grown','guardian']);
+ }
+});
+test('unlock prices, prerequisites, separate progress, shared resources and chapter cap',()=>{
+ let s=matureChapter();const resources={coins:s.coins,energy:s.energy,lastDaily:s.lastDaily};
+ assert.throws(()=>transition({...s,journey:{...s.journey,crystals:29}},'unlock:luna',now),e=>e.code==='unlock_locked');
+ s=transition(s,'unlock:luna',now);assert.equal(s.journey.crystals,70);assert.equal(s.petId,'chudik');assert.equal(s.journey.owned.luna.level,1);
+ assert.throws(()=>transition(s,'unlock:owl',now),e=>e.code==='unlock_locked');assert.throws(()=>transition(s,'unlock:luna',now),e=>e.code==='already_owned');
+ s=transition(s,'visit:luna',now);assert.equal(s.level,1);assert.equal(s.xp,0);assert.equal(s.energy,resources.energy);assert.equal(s.coins,resources.coins);assert.equal(s.journey.firstPetId,'chudik');
+ assert.throws(()=>transition(s,'play:chudik',now),e=>e.code==='pet_changed');
+ for(let i=0;i<4;i++)s=transition(s,'play:luna',now+i*2000);
+ assert.equal(s.level,2);s=transition(s,'visit:chudik',now+8000);assert.equal(s.xp,35);assert.equal(s.level,2);assert.equal(s.journey.owned.luna.xp,0);
+ s=transition(s,'unlock:owl',now+8000);assert.equal(Object.keys(s.journey.owned).length,3);assert.equal(s.journey.crystals,14);
+ s.journey.crystals=1000;assert.throws(()=>transition(s,'unlock:deer',now+8000),e=>e.code==='unlock_locked');
+});
+test('quest rewards, cap and Moscow midnight cannot be claimed twice or for a stale day',()=>{
+ const t=now-60000;let s=transition(initial(t),'select:owl',t);
+ assert.throws(()=>transition(s,`quest:${day(t)}:play`,t),e=>e.code==='quest_incomplete');
+ for(let i=0;i<10;i++){s.energy=100;s=transition(s,'play:owl',t+i*2000);}
+ assert.equal(s.journey.crystals,10);
+ for(const q of ['play','care','xp'])s=transition(s,`quest:${day(t)}:${q}`,t+20000);
+ assert.equal(s.journey.crystals,50);assert.throws(()=>transition(s,`quest:${day(t)}:play`,t+20000),e=>e.code==='already_claimed');
+ s=transition(s,'daily',t+20000);assert.equal(s.journey.crystals,55);
+ s=restore(s,now+1000);assert.equal(s.journey.tasks.play,0);assert.deepEqual(s.journey.tasks.claimed,[]);assert.equal(s.journey.crystals,55);
+ assert.throws(()=>transition(s,`quest:${day(t)}:play`,now+1000),e=>e.code==='quest_expired');
+});
+test('all 12 starters reach 3/12 without offers in a deterministic two-day scenario',()=>{
+ const ids=require('../.sites-runtime/test-build/pets.js').petIds;
+ for(const starter of ids){
+  let t=Date.UTC(2026,10,15,9),s=transition(initial(t),`select:${starter}`,t);const others=ids.filter(id=>id!==starter);let games=0;
+  for(let d=0;d<2;d++){
+   t=Date.UTC(2026,10,15+d,9);s=transition(s,'daily',t);
+   for(let i=0;i<10;i++){
+    t+=900000; // Return after 15 min: enough energy, no synthetic resources.
+    s=transition(s,`play:${s.petId}`,t);games++;
+    for(const q of ['play','care','xp']){try{s=transition(s,`quest:${day(t)}:${q}`,t);}catch(e){assert.ok(['quest_incomplete','already_claimed'].includes(e.code));}}
+    if(Object.keys(s.journey.owned).length===1&&require('../.sites-runtime/test-build/rules.js').unlockStatus(s).available){s=transition(s,`unlock:${others[0]}`,t);s=transition(s,`visit:${others[0]}`,t);}
+    if(Object.keys(s.journey.owned).length===2&&require('../.sites-runtime/test-build/rules.js').unlockStatus(s).available)s=transition(s,`unlock:${others[1]}`,t);
+   }
+  }
+  assert.equal(Object.keys(s.journey.owned).length,3,starter);assert.ok(s.journey.crystals>=0);assert.equal(s.offerDone,false);assert.equal(s.journey.firstPetId,starter);
+ }
+});
+test('D1 concurrent unlocks and claims charge once, preserve old receipts and keep profiles isolated',async()=>{
+ const {Miniflare}=await import('miniflare');const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("ok")}}',d1Databases:['DB'],compatibilityDate:'2026-01-01'});
+ try{
+  const db=await mf.getD1Database('DB');for(const sql of readFileSync('drizzle/0000_lame_havok.sql','utf8').split('--> statement-breakpoint'))await db.prepare(sql.trim()).run();
+  const state=matureChapter();state.journey.tasks.play=3;
+  await db.prepare('INSERT INTO players VALUES (?,?,0)').bind('alice',JSON.stringify(state)).run();
+  const results=await Promise.allSettled(Array.from({length:10},(_,i)=>act(db,'alice','unlock-'+i,'unlock:luna',now)));
+  assert.equal(results.filter(r=>r.status==='fulfilled').length,1);let saved=(await getState(db,'alice',now)).state;assert.equal(saved.journey.crystals,70);assert.equal(Object.keys(saved.journey.owned).length,2);
+  const winner=results.findIndex(r=>r.status==='fulfilled');assert.equal((await act(db,'alice','unlock-'+winner,'unlock:luna',now)).replayed,true);
+  await assert.rejects(act(db,'alice','unlock-'+winner,'unlock:owl',now),e=>e.code==='key_conflict');
+  const claims=await Promise.allSettled(Array.from({length:10},(_,i)=>act(db,'alice','quest-'+i,`quest:${day(now)}:play`,now)));
+  assert.equal(claims.filter(r=>r.status==='fulfilled').length,1);saved=(await getState(db,'alice',now)).state;assert.equal(saved.journey.crystals,80);
+  assert.equal(Object.keys((await getState(db,'bob',now)).state.journey.owned).length,0);
+ }finally{await mf.dispose();}
+});
+
+
+test('HTTP collection operations validate input, reject unearned pets and replay confirmed spending',async()=>{
+ const {Miniflare}=await import('miniflare');const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("ok")}}',d1Databases:['DB'],compatibilityDate:'2026-01-01'});
+ try{
+  const db=await mf.getD1Database('DB');for(const sql of readFileSync('drizzle/0000_lame_havok.sql','utf8').split('--> statement-breakpoint'))await db.prepare(sql.trim()).run();
+  const timestamp=Date.now(),s=matureChapter('whale');s.journey.tasks={day:day(timestamp),play:3,care:3,xp:75,claimed:[]};s.energyAt=timestamp;
+  await db.prepare('INSERT INTO players VALUES (?,?,0)').bind('tg:12345',JSON.stringify(s)).run();
+  const call=(body,key)=>handleGame(new Request('https://game.test/api/game',{method:'POST',headers:{'x-telegram-init-data':signed(timestamp),origin:'https://game.test','content-type':'application/json','idempotency-key':key},body:JSON.stringify(body)}),{DB:db,TELEGRAM_BOT_TOKEN:'test-token'},true);
+  for(const body of [{action:'unlock_pet',petId:'fake'},{action:'visit_pet',petId:{}},{action:'claim_quest',questId:'play'},{action:'claim_quest',questId:'fake',questDay:day(timestamp)},{action:'feed',petId:12}])assert.equal((await call(body,'invalid-request-0001')).status,400);
+  assert.equal((await call({action:'visit_pet',petId:'luna'},'not-owned-request-001')).status,409);
+  let response=await call({action:'unlock_pet',petId:'luna'},'unlock-request-00001');assert.equal(response.status,200);assert.equal((await response.json()).state.journey.crystals,70);
+  response=await call({action:'unlock_pet',petId:'luna'},'unlock-request-00001');assert.equal((await response.json()).replayed,true);
+  response=await call({action:'claim_quest',questId:'play',questDay:day(timestamp)},'claim-request-000001');assert.equal(response.status,200);assert.equal((await response.json()).state.journey.crystals,80);
+  response=await call({action:'visit_pet',petId:'luna'},'visit-request-000001');assert.equal(response.status,200);assert.equal((await response.json()).state.level,1);
+  response=await call({action:'play',petId:'whale'},'stale-pet-request-001');assert.equal(response.status,409);assert.equal((await response.json()).error,'pet_changed');
+ }finally{await mf.dispose();}
 });
