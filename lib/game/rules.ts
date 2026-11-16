@@ -1,11 +1,13 @@
+import {careStats} from './abilities';
+import {ROUND_MS,ROUND_TTL_MS,validateFireflyHits,fireflyRewards,type FireflyProgress,type FireflyHit} from './fireflies';
 import {isPetId, type PetId} from './pets';
 export type EconomyAction = 'feed' | 'play' | 'daily' | 'offer';
 export type QuestId = 'play' | 'care' | 'xp';
-export type Action = EconomyAction | `select:${PetId}` | `unlock:${PetId}` | `unlock:${PetId}:${number}` | `evolve:${PetId}:${number}:30` | `visit:${PetId}` | `feed:${PetId}` | `play:${PetId}` | `quest:${string}:${QuestId}`;
+export type Action = EconomyAction | 'firefly_start' | `firefly_finish:${string}:${string}` | `select:${PetId}` | `unlock:${PetId}` | `unlock:${PetId}:${number}` | `evolve:${PetId}:${number}:30` | `visit:${PetId}` | `feed:${PetId}` | `play:${PetId}` | `quest:${string}:${QuestId}`;
 export type PetProgress={level:number;xp:number;collection:string[];stage?:number};
 export type Journey={version:1|2;firstPetId:PetId|null;crystals:number;owned:Partial<Record<PetId,PetProgress>>;tasks:{day:string;play:number;care:number;xp:number;claimed:QuestId[]}};
 export const quests = [{id:'play',title:'Солнечные игры',description:'Поиграй 3 раза',target:3,reward:10},{id:'care',title:'День заботы',description:'Покорми или поиграй 5 раз',target:5,reward:15},{id:'xp',title:'Растём вместе',description:'Заработай 100 опыта',target:100,reward:15}] as const;
-export type State = { petId:PetId|null; coins:number; energy:number; xp:number; level:number; lastDaily:string; offerDone:boolean; collection:string[]; energyAt:number; actionAt:number; journey?:Journey };
+export type State = { petId:PetId|null; coins:number; energy:number; xp:number; level:number; lastDaily:string; offerDone:boolean; collection:string[]; energyAt:number; actionAt:number; journey?:Journey;fireflies?:FireflyProgress };
 export class GameError extends Error { constructor(public code:string, message:string, public status=409){super(message)} }
 export const day = (now:number) => new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
 export const initial = (now:number):State => ({petId:null,coins:50,energy:70,xp:0,level:1,lastDaily:'',offerDone:false,collection:['🥚 Первое яйцо'],energyAt:now,actionAt:0});
@@ -18,6 +20,8 @@ export function restore(state:State, now:number):State & {journey:Journey} {
  for(const pet of Object.values(s.journey.owned))if(pet.stage===undefined)pet.stage=Math.min(2,Math.max(0,pet.level-1));
  s.journey.version=2;
  if(s.journey.tasks.day!==day(now))s.journey.tasks={day:day(now),play:0,care:0,xp:0,claimed:[]};
+ if(!s.fireflies)s.fireflies={day:day(now),attempts:0,best:0};
+ if(s.fireflies.day!==day(now)){s.fireflies.day=day(now);s.fireflies.attempts=0;}
  if(s.energy>=100){s.energyAt=now;}else if(ticks){s.energy=Math.min(100,s.energy+ticks);s.energyAt=s.energy===100?now:s.energyAt+ticks*60000;}
  return s as State & {journey:Journey};
 }
@@ -53,9 +57,43 @@ export function collectionMilestones(state:State){
  const target=count<3?3:count<6?6:12;
  return {count,target,complete:count===12,steps:[3,6,12].map(value=>({value,reached:count>=value}))};
 }
+function awardExperience(s:State & {journey:Journey},petId:PetId,amount:number){
+ const p=s.journey.owned[petId]!;p.xp+=amount;
+ while(p.xp>=100){p.xp-=100;p.level++;s.coins+=25;if(p.level===2)p.collection.push('🌱 Первый росток');}
+ if(p.level>=2)p.stage=Math.max(p.stage??0,1);
+ if(s.petId===petId){s.level=p.level;s.xp=p.xp;s.collection=[...p.collection];}
+}
 export function transition(state:State, action:Action, now:number){
  const s=restore(state,now);
  const j=s.journey;
+ if(action==='firefly_start'){
+  if(!s.petId)throw new GameError('choose_first','Сначала выбери первого друга');
+  const existing=s.fireflies!.round;
+  if(existing&&!existing.settled&&now-existing.startedAt<=ROUND_TTL_MS)throw new GameError('round_active','Раунд уже начат. Продолжи его или забери результат');
+  if(s.fireflies!.attempts>=3)throw new GameError('round_limit','Три наградные попытки на сегодня использованы');
+  const guardian=petStage(s)>=2,cost=guardian&&s.petId==='luna'?7:10;
+  if(s.energy<cost)throw new GameError('not_enough_energy',`Нужно ${cost} энергии`);
+  s.energy-=cost;s.fireflies!.attempts++;
+  s.fireflies!.round={id:crypto.randomUUID(),seed:crypto.getRandomValues(new Uint32Array(1))[0],petId:s.petId,guardian,startedAt:now,day:day(now),settled:false};
+  return s;
+ }
+ if(action.startsWith('firefly_finish:')){
+  const [,id,encoded]=action.split(':');const round=s.fireflies!.round;
+  if(!round||round.id!==id)throw new GameError('round_changed','Этот раунд больше не доступен');
+  if(round.settled)throw new GameError('already_claimed','Результат этого раунда уже сохранён');
+  if(now-round.startedAt<ROUND_MS)throw new GameError('round_early','Дождись окончания раунда');
+  if(now-round.startedAt>ROUND_TTL_MS)throw new GameError('round_expired','Время сохранения раунда истекло. Начни новую попытку');
+  const hits:FireflyHit[]=encoded?encoded.split(',').map(value=>{const [target,at]=value.split('@');return {target:Number(target),at:Number(at)};}):[];
+  if(!validateFireflyHits(round,hits))throw new GameError('invalid_hits','Не удалось проверить попадания',400);
+  const reward=fireflyRewards(round,hits.length);let crystal=reward.crystals;
+  // A successful mini-game is one play/care action. Midnight uses settlement day for tasks.
+  if(hits.length){if(j.tasks.play<10)crystal++;j.tasks.play++;j.tasks.care++;j.tasks.xp+=reward.xp;}
+  s.coins+=reward.coins;j.crystals+=crystal;s.energy=Math.min(100,s.energy+reward.energyBack);if(s.energy===100)s.energyAt=now;
+  awardExperience(s,round.petId,reward.xp);
+  round.settled=true;round.score=hits.length;round.reward={xp:reward.xp,coins:reward.coins,crystals:crystal};s.fireflies!.best=Math.max(s.fireflies!.best,hits.length);
+  return s;
+ }
+ const stats=careStats(s.petId,petStage(s)>=2);
  if(action.startsWith('select:')){
   const petId=action.slice(7);
   if(!isPetId(petId))throw new GameError('invalid_pet','Такого питомца нет в атласе',400);
@@ -109,14 +147,14 @@ export function transition(state:State, action:Action, now:number){
  }else{
   if(now-s.actionAt<1500)throw new GameError('cooldown','Питомец отдыхает — попробуй через пару секунд',429);
   if(action==='feed'){
-   if(s.coins<5)throw new GameError('not_enough_coins','Нужно 5 монет');
+   if(s.coins<stats.feedCost)throw new GameError('not_enough_coins',`Нужно ${stats.feedCost} монет`);
  if(s.energy>=100)throw new GameError('energy_full','Питомец уже сыт');
-   s.coins-=5;s.energy=Math.min(100,s.energy+20);s.xp+=10;
+   s.coins-=stats.feedCost;s.energy=Math.min(100,s.energy+stats.feedEnergy);s.xp+=stats.feedXP;
   }else if(action==='play'){
-   if(s.energy<15)throw new GameError('not_enough_energy','Нужно 15 энергии');
-   s.energy-=15;s.coins+=3;s.xp+=25+(s.petId&&petStage(s)>=2?5:0);
+   if(s.energy<stats.playEnergy)throw new GameError('not_enough_energy',`Нужно ${stats.playEnergy} энергии`);
+   s.energy-=stats.playEnergy;s.coins+=stats.playCoins;s.xp+=stats.playXP;
   }else throw new GameError('invalid_action','Неизвестное действие',400);
-  if(s.petId){j.tasks.care++;if(action==='play'){if(j.tasks.play<10)j.crystals++;j.tasks.play++;}j.tasks.xp+=action==='play'?25+(petStage(s)>=2?5:0):10;}
+  if(s.petId){j.tasks.care++;if(action==='play'){if(j.tasks.play<10)j.crystals++;j.tasks.play++;}j.tasks.xp+=action==='play'?stats.playXP:stats.feedXP;}
   if(s.energy===100)s.energyAt=now;
   s.actionAt=now;
   while(s.xp>=100){s.xp-=100;s.level++;s.coins+=25;

@@ -388,3 +388,62 @@ test('D1 final invitation is committed once, survives replays and remains isolat
   assert.equal((await act(db,'finalist',`final-${winner}`,'unlock:griffin:330',now)).replayed,true);await assert.rejects(act(db,'finalist',`final-${winner}`,'unlock:griffin:300',now),e=>e.code==='key_conflict');assert.equal(Object.keys((await getState(db,'other-player',now)).state.journey.owned).length,0);
  }finally{await mf.dispose();}
 });
+
+const flyTime=Date.UTC(2026,10,16,9);
+const flyRules=()=>require('../.sites-runtime/test-build/fireflies.js');
+function roundHits(round){return Array.from({length:12},(_,target)=>({target,at:flyRules().fireflyTarget(round,target).start+100}));}
+function finishAction(round,hits=roundHits(round)){return `firefly_finish:${round.id}:${hits.map(h=>`${h.target}@${h.at}`).join(',')}`;}
+function flyPlayer(petId='chudik',guardian=false){let s=transition(initial(flyTime),`select:${petId}`,flyTime);if(guardian){s.level=3;s.journey.owned[petId]={level:3,xp:0,stage:2,collection:['egg','grown','guardian']};}return s;}
+test('all twelve guardians have distinct abilities, active only in guardian form',()=>{
+ const {abilities,careStats}=require('../.sites-runtime/test-build/abilities.js'),ids=require('../.sites-runtime/test-build/pets.js').petIds;
+ assert.equal(new Set(ids.map(id=>abilities[id].title)).size,12);
+ for(const id of ids)assert.deepEqual(careStats(id,false),{feedCost:5,feedEnergy:20,feedXP:10,playEnergy:15,playXP:25,playCoins:3});
+ const cases=[['squirrel','play','energy',58],['badger','feed','coins',46],['deer','feed','energy',95],['whale','feed','xp',15],['lynx','play','xp',33],['griffin','play','coins',54]];
+ for(const [id,action,field,expected] of cases){const s=transition(flyPlayer(id,true),`${action}:${id}`,flyTime);assert.equal(s[field],expected,id);}
+});
+test('firefly rounds validate schedule and score on the server, reward original pet, and settle once',()=>{
+ let s=transition(flyPlayer(),'firefly_start',flyTime);const round=s.fireflies.round;assert.equal(s.energy,60);assert.equal(s.fireflies.attempts,1);
+ assert.throws(()=>transition(s,'firefly_start',flyTime),e=>e.code==='round_active');assert.throws(()=>transition(s,finishAction(round),flyTime+17000),e=>e.code==='round_early');
+ for(const hits of [[{target:0,at:0}],[{target:12,at:1000}],[{target:0,at:900},{target:0,at:900}],[{target:1,at:2300},{target:0,at:900}]])assert.throws(()=>transition(s,finishAction(round,hits),flyTime+18000),e=>e.code==='invalid_hits');
+ s.journey.owned.luna={level:1,xp:0,stage:0,collection:['egg']};s=transition(s,'visit:luna',flyTime);s=transition(s,finishAction(round),flyTime+18000);
+ assert.equal(s.petId,'luna');assert.equal(s.xp,0);assert.equal(s.journey.owned.chudik.xp,34);assert.equal(s.coins,54);assert.equal(s.journey.crystals,4);assert.equal(s.journey.tasks.play,1);assert.equal(s.journey.tasks.care,1);assert.equal(s.journey.tasks.xp,34);assert.equal(s.fireflies.best,12);
+ assert.throws(()=>transition(s,finishAction(round),flyTime+18000),e=>e.code==='already_claimed');
+});
+test('mini-game ability variations preserve bounded rewards and capture the starting form',()=>{
+ for(const id of ['luna','peach','otter','hedgehog','chudik','owl']){
+  let s=transition(flyPlayer(id,true),'firefly_start',flyTime);const r=s.fireflies.round;assert.equal(s.energy,id==='luna'?63:60);
+  if(id==='chudik')assert.equal(flyRules().fireflyTarget(r,0).end-flyRules().fireflyTarget(r,0).start,1400);
+  s=transition(s,finishAction(r),flyTime+18000);assert.equal(s.fireflies.round.reward.xp,id==='peach'?44:34);assert.equal(s.fireflies.round.reward.coins,id==='hedgehog'?9:4);assert.equal(s.journey.crystals,4);if(id==='otter')assert.equal(s.energy,65);
+ }
+ const s=transition(flyPlayer('peach'),'firefly_start',flyTime);s.journey.owned.peach.stage=2;
+ assert.equal(transition(s,finishAction(s.fireflies.round),flyTime+18000).fireflies.round.reward.xp,34);
+});
+test('three attempts are profile-wide, expiry is bounded, and Moscow midnight resets only new attempts',()=>{
+ let s=flyPlayer(),time=flyTime;
+ for(let i=0;i<3;i++){s=transition(s,'firefly_start',time);const round=s.fireflies.round;s=transition(s,finishAction(round,[]),time+18000);time+=20000;}
+ assert.equal(s.fireflies.attempts,3);assert.equal(s.journey.crystals,0);assert.equal(s.xp,0);assert.throws(()=>transition(s,'firefly_start',time),e=>e.code==='round_limit');
+ let expired=transition(flyPlayer(),'firefly_start',flyTime);assert.throws(()=>transition(expired,finishAction(expired.fireflies.round),flyTime+300001),e=>e.code==='round_expired');expired=transition(expired,'firefly_start',flyTime+300001);assert.equal(expired.fireflies.attempts,2);
+ const before=Date.UTC(2026,10,16,20,59,50);let cross=transition({...flyPlayer(),energyAt:before},'firefly_start',before);const round=cross.fireflies.round;cross=transition(cross,finishAction(round),before+18000);assert.equal(cross.fireflies.attempts,0);assert.equal(cross.journey.tasks.play,1);assert.equal(cross.fireflies.round.day,'2026-11-16');cross=transition(cross,'firefly_start',before+20000);assert.equal(cross.fireflies.attempts,1);
+});
+test('D1 concurrent starts/finishes issue one round and one payout, including retries and isolation',async()=>{
+ const {Miniflare}=await import('miniflare');const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("ok")}}',d1Databases:['DB'],compatibilityDate:'2026-01-01'});
+ try{
+  const db=await mf.getD1Database('DB');for(const sql of readFileSync('drizzle/0000_lame_havok.sql','utf8').split('--> statement-breakpoint'))await db.prepare(sql.trim()).run();await act(db,'fly-a','starter','select:chudik',flyTime);
+  const starts=await Promise.allSettled(Array.from({length:8},(_,i)=>act(db,'fly-a','start-'+i,'firefly_start',flyTime)));assert.equal(starts.filter(r=>r.status==='fulfilled').length,1);
+  const startKey='start-'+starts.findIndex(r=>r.status==='fulfilled');let state=(await getState(db,'fly-a',flyTime)).state;const round=state.fireflies.round;assert.equal(state.energy,60);assert.equal(state.fireflies.attempts,1);assert.equal((await act(db,'fly-a',startKey,'firefly_start',flyTime)).replayed,true);
+  const finishes=await Promise.allSettled(Array.from({length:8},(_,i)=>act(db,'fly-a','finish-'+i,finishAction(round),flyTime+18000)));assert.equal(finishes.filter(r=>r.status==='fulfilled').length,1);state=(await getState(db,'fly-a',flyTime+18000)).state;assert.equal(state.journey.crystals,4);assert.equal(state.xp,34);
+  const key='finish-'+finishes.findIndex(r=>r.status==='fulfilled');assert.equal((await act(db,'fly-a',key,finishAction(round),flyTime+18000)).replayed,true);await assert.rejects(act(db,'fly-a',key,finishAction(round,[]),flyTime+18000),e=>e.code==='key_conflict');await assert.rejects(act(db,'fly-b','stolen',finishAction(round),flyTime+18000),e=>e.code==='round_changed');
+ }finally{await mf.dispose();}
+});
+test('HTTP mini-game refuses malformed payloads and early finish; valid settled round survives reload',async()=>{
+ const {Miniflare}=await import('miniflare');const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("ok")}}',d1Databases:['DB'],compatibilityDate:'2026-01-01'});
+ try{
+  const db=await mf.getD1Database('DB');for(const sql of readFileSync('drizzle/0000_lame_havok.sql','utf8').split('--> statement-breakpoint'))await db.prepare(sql.trim()).run();const timestamp=Date.now();await db.prepare('INSERT INTO players VALUES (?,?,0)').bind('tg:12345',JSON.stringify(flyPlayer())).run();
+  const call=(body,key='firefly-http-000001')=>handleGame(new Request('https://game.test/api/game',{method:'POST',headers:{'x-telegram-init-data':signed(timestamp),origin:'https://game.test','content-type':'application/json','idempotency-key':key},body:JSON.stringify(body)}),{DB:db,TELEGRAM_BOT_TOKEN:'test-token'},true);
+  for(const body of [{action:'firefly_finish',roundId:'bad',hits:[]},{action:'firefly_finish',roundId:crypto.randomUUID(),hits:Array(13).fill({target:0,at:900})},{action:'firefly_finish',roundId:crypto.randomUUID(),hits:[null]}])assert.equal((await call(body)).status,400);
+  let response=await call({action:'firefly_start'});assert.equal(response.status,200);const started=await response.json(),round=started.state.fireflies.round;assert.equal((await call({action:'firefly_finish',roundId:round.id,hits:roundHits(round)},'firefly-http-000002')).status,409);
+  // Advance only the saved server fixture, not production clocks or authorization.
+  round.startedAt=timestamp-19000;await db.prepare('UPDATE players SET state=? WHERE id=?').bind(JSON.stringify({...started.state,fireflies:{...started.state.fireflies,round}}),'tg:12345').run();
+  response=await call({action:'firefly_finish',roundId:round.id,hits:roundHits(round)},'firefly-http-000003');assert.equal(response.status,200);assert.equal((await response.json()).state.fireflies.round.score,12);assert.equal((await getState(db,'tg:12345',timestamp)).state.journey.crystals,4);
+ }finally{await mf.dispose();}
+});

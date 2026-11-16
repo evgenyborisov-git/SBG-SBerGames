@@ -1,4 +1,4 @@
-// Shared visual catalog. All twelve pets use the same saved profile progression.
+// Shared visual catalog; owned pets keep separate progression.
 export const galleryPets = [
   {
     "id": "chudik",

@@ -3,6 +3,7 @@ import {useEffect, useRef, useState} from 'react';
 import {ArrowLeft, ArrowRight, ChevronRight, Sparkles, X, Heart, Carrot, Volleyball, Moon} from 'lucide-react';
 import {petPortrait, petThumbnail} from '../lib/pet-portraits';
 import {unlockStatus,type State} from '../lib/game/rules';
+import {abilities} from '../lib/game/abilities';
 import type {PetId} from '../lib/game/pets';
 import {galleryBiomes, galleryPets} from '../lib/gallery';
 import {PetVisual, usePetReaction, type Reaction} from './pet-reactions';
@@ -69,7 +70,7 @@ function PetDetails({initialIndex, onClose, currentPetId, onVisitPet, state,disa
         </div>
         <p className="guardian-mood" role="status">{emotion.loading ? 'Готовим маленькое чудо…' : emotion.failed ? 'Не удалось загрузить реакцию. Нажми ещё раз.' : mood}</p>
         <div className="guardian-title-row"><div><p className="eyebrow">{pet.species}</p><h2 id="guardian-title">{pet.name}</h2></div><Sparkles size={26} aria-hidden="true"/></div>
-        <p className="guardian-personality">{pet.personality}</p>
+        <p className="guardian-personality">{pet.personality}</p><p className="ability-note"><strong>{abilities[pet.id].title}</strong> · {abilities[pet.id].description} Активируется в форме хранителя.</p>
         <p className="guardian-note">Здесь можно посмотреть облики и попробовать реакции без расхода ресурсов. Первый друг выбран однажды. Новых хранителей приглашают за заработанные кристаллы; развитие каждого сохраняется отдельно.</p>
         <div className="guardian-unlock"><p>{owned?`Уже на острове · уровень ${owned.level}`:status?.count===12?'Коллекция уже собрана':`Приглашение: ${status?.cost??30} кристаллов`}</p>{!owned&&<p className="muted">{status?.reasons.join('. ')||'Все условия выполнены — можно пригласить!'}</p>}<button className="guardian-visit" disabled={disabled||!state||(!owned&&!status?.available)} onClick={()=>{if(!owned&&confirmUnlock===null){setConfirmUnlock(status!.cost);return;}onClose();if(currentPetId===pet.id)onVisitPet();else if(owned)onVisit(pet.id);else onUnlock(pet.id,confirmUnlock!);}}>{currentPetId===pet.id?'На остров к другу':owned?'Посетить друга':confirmUnlock!==null?`Подтвердить · ${confirmUnlock} кристаллов`:'Пригласить в коллекцию'} <ChevronRight size={17}/></button></div>
         <div className="guardian-browse"><button onClick={() => browse(-1)} aria-label="Предыдущий питомец"><ArrowLeft size={18}/><span>Назад</span></button><span aria-live="polite">{index + 1} / {galleryPets.length}</span><button onClick={() => browse(1)} aria-label="Следующий питомец"><span>Дальше</span><ArrowRight size={18}/></button></div>
