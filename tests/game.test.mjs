@@ -197,7 +197,7 @@ test('unlock prices, prerequisites, separate progress, shared resources and chap
  for(let i=0;i<4;i++)s=transition(s,'play:luna',now+i*2000);
  assert.equal(s.level,2);s=transition(s,'visit:chudik',now+8000);assert.equal(s.xp,35);assert.equal(s.level,2);assert.equal(s.journey.owned.luna.xp,0);
  s=transition(s,'unlock:owl',now+8000);assert.equal(Object.keys(s.journey.owned).length,3);assert.equal(s.journey.crystals,14);
- s.journey.crystals=1000;assert.throws(()=>transition(s,'unlock:deer',now+8000),e=>e.code==='unlock_locked');
+ s.journey.crystals=1000;assert.throws(()=>transition(s,'unlock:deer',now+8000),e=>e.code==='unlock_locked'); // Needs a guardian in chapter two.
 });
 test('quest rewards, cap and Moscow midnight cannot be claimed twice or for a stale day',()=>{
  const t=now-60000;let s=transition(initial(t),'select:owl',t);
@@ -258,5 +258,76 @@ test('HTTP collection operations validate input, reject unearned pets and replay
   response=await call({action:'claim_quest',questId:'play',questDay:day(timestamp)},'claim-request-000001');assert.equal(response.status,200);assert.equal((await response.json()).state.journey.crystals,80);
   response=await call({action:'visit_pet',petId:'luna'},'visit-request-000001');assert.equal(response.status,200);assert.equal((await response.json()).state.level,1);
   response=await call({action:'play',petId:'whale'},'stale-pet-request-001');assert.equal(response.status,409);assert.equal((await response.json()).error,'pet_changed');
+ }finally{await mf.dispose();}
+});
+
+const stageOf=s=>require('../.sites-runtime/test-build/rules.js').petStage(s);
+function readyEvolution(){let s=matureChapter();s.level=3;s.xp=0;s.journey.owned.chudik={level:3,xp:0,collection:[...s.collection],stage:1};return s;}
+test('guardian evolution charges once, preserves level and grants real XP ability without multiplying daily crystals',()=>{
+ let s=readyEvolution();assert.equal(stageOf(s),1);
+ assert.throws(()=>transition(s,'evolve:chudik:0:30',now),e=>e.code==='quote_changed');
+ assert.throws(()=>transition({...s,journey:{...s.journey,crystals:29}},'evolve:chudik:1:30',now),e=>e.code==='evolution_locked');
+ const old=structuredClone(s);s=transition(s,'evolve:chudik:1:30',now);assert.equal(s.journey.crystals,70);assert.equal(stageOf(s),2);assert.equal(s.level,3);assert.equal(s.collection.filter(x=>x==='🦋 Крылья чудес').length,1);assert.equal(Object.keys(s.journey.owned).length,1);
+ assert.equal(old.journey.crystals,100);assert.throws(()=>transition(s,'evolve:chudik:1:30',now),e=>e.code==='quote_changed');
+ s=transition(s,'play:chudik',now);assert.equal(s.xp,30);assert.equal(s.journey.tasks.xp,30);assert.equal(s.journey.crystals,71);assert.equal(s.energy,55);
+});
+test('level three alone does not unlock a new guardian; old level-three forms survive migration free',()=>{
+ let s=transition(initial(now),'select:luna',now);
+ for(let i=0;i<8;i++){s.energy=100;s=transition(s,'play:luna',now+i*2000);}
+ assert.equal(s.level,3);assert.equal(stageOf(s),1);assert.ok(!s.collection.includes('🦋 Крылья чудес'));
+ const legacy={...s,journey:{...s.journey,version:1,crystals:17,owned:{luna:{level:4,xp:23,collection:['egg','grown','guardian']}}}};legacy.level=4;legacy.xp=23;legacy.collection=['egg','grown','guardian'];
+ const restored=restore(legacy,now+14000);assert.equal(stageOf(restored),2);assert.equal(restored.journey.version,2);assert.equal(restored.journey.crystals,17);assert.deepEqual(restore(restored,now+14000),restored);assert.deepEqual(restored.collection,legacy.collection);
+});
+test('quoted unlock cost cannot change silently, and second chapter stops at six unique pets',()=>{
+ let s=matureChapter();s.journey.crystals=1000;
+ assert.throws(()=>transition(s,'unlock:luna:60',now),e=>e.code==='quote_changed');assert.equal(s.journey.crystals,1000);
+ s=transition(s,'unlock:luna:30',now);s.journey.owned.luna.level=2;s=transition(s,'unlock:owl:60',now);s.journey.owned.owl.level=2;
+ assert.throws(()=>transition(s,'unlock:deer:90',now),e=>e.code==='unlock_locked');s.journey.owned.chudik.stage=2;
+ s=transition(s,'unlock:deer:90',now);s.journey.owned.deer.level=2;s.journey.owned.luna.stage=2;
+ s=transition(s,'unlock:otter:120',now);s.journey.owned.otter.level=2;s.journey.owned.owl.stage=2;
+ s=transition(s,'unlock:lynx:150',now);assert.equal(Object.keys(s.journey.owned).length,6);assert.equal(s.journey.crystals,550);
+ assert.throws(()=>transition(s,'unlock:griffin:0',now),e=>e.code==='unlock_locked');
+});
+test('all starter choices reach 6/12 with three paid evolutions using only earned daily resources',()=>{
+ const ids=require('../.sites-runtime/test-build/pets.js').petIds,rules=require('../.sites-runtime/test-build/rules.js');
+ for(const starter of ids){
+  let t=Date.UTC(2026,10,16,9),s=transition(initial(t),`select:${starter}`,t),finishedDay=0;
+  for(let d=0;d<12&&Object.keys(s.journey.owned).length<6;d++){
+   t=Date.UTC(2026,10,16+d,9);s=transition(s,'daily',t);
+   for(let i=0;i<10;i++){
+    const entries=Object.entries(s.journey.owned);const next=entries.find(([,p])=>p.level<2)??entries.find(([id,p])=>p.level<3&&rules.petStage(s,id)<2)??entries[0];
+    s=transition(s,`visit:${next[0]}`,t);t+=900000;s=transition(s,`play:${s.petId}`,t);
+    for(const q of ['play','care','xp']){try{s=transition(s,`quest:${day(t)}:${q}`,t);}catch(e){assert.ok(['already_claimed','quest_incomplete'].includes(e.code));}}
+    let count=Object.keys(s.journey.owned).length;const guardians=Object.keys(s.journey.owned).filter(id=>rules.petStage(s,id)>=2).length;
+    if(count>=3&&count<6&&guardians<count-2){const ready=Object.keys(s.journey.owned).find(id=>rules.evolutionStatus(s,id).available);if(ready)s=transition(s,`evolve:${ready}:1:30`,t);}
+    const status=rules.unlockStatus(s);if(status.available){const target=ids.find(id=>!s.journey.owned[id]);s=transition(s,`unlock:${target}:${status.cost}`,t);}
+    assert.ok(s.journey.crystals>=0);assert.equal(s.offerDone,false);
+   }
+   finishedDay=d+1;
+  }
+  assert.equal(Object.keys(s.journey.owned).length,6,starter);assert.ok(finishedDay<=12);assert.equal(s.journey.firstPetId,starter);assert.equal(Object.keys(s.journey.owned).filter(id=>rules.petStage(s,id)>=2).length,3);
+ }
+});
+test('concurrent evolution requests preserve spending and ability; old receipt cannot evolve a later form',async()=>{
+ const {Miniflare}=await import('miniflare');const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("ok")}}',d1Databases:['DB'],compatibilityDate:'2026-01-01'});
+ try{
+  const db=await mf.getD1Database('DB');for(const sql of readFileSync('drizzle/0000_lame_havok.sql','utf8').split('--> statement-breakpoint'))await db.prepare(sql.trim()).run();
+  await db.prepare('INSERT INTO players VALUES (?,?,0)').bind('evolver',JSON.stringify(readyEvolution())).run();
+  const results=await Promise.allSettled(Array.from({length:10},(_,i)=>act(db,'evolver','evolve-'+i,'evolve:chudik:1:30',now)));
+  assert.equal(results.filter(x=>x.status==='fulfilled').length,1);const winner=results.findIndex(x=>x.status==='fulfilled');const saved=await getState(db,'evolver',now);assert.equal(saved.state.journey.crystals,70);assert.equal(stageOf(saved.state),2);
+  assert.equal((await act(db,'evolver','evolve-'+winner,'evolve:chudik:1:30',now)).replayed,true);
+  await assert.rejects(act(db,'evolver','evolve-'+winner,'evolve:chudik:2:30',now),e=>e.code==='key_conflict');
+  await act(db,'evolver','next-game','play:chudik',now+2000);const retry=await act(db,'evolver','evolve-'+winner,'evolve:chudik:1:30',now+2000);assert.equal(retry.state.xp,30);assert.equal(retry.state.journey.crystals,71);
+ }finally{await mf.dispose();}
+});
+test('HTTP evolve validates exact quote, commits form, and returns a human message',async()=>{
+ const {Miniflare}=await import('miniflare');const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("ok")}}',d1Databases:['DB'],compatibilityDate:'2026-01-01'});
+ try{
+  const db=await mf.getD1Database('DB');for(const sql of readFileSync('drizzle/0000_lame_havok.sql','utf8').split('--> statement-breakpoint'))await db.prepare(sql.trim()).run();const timestamp=Date.now();await db.prepare('INSERT INTO players VALUES (?,?,0)').bind('tg:12345',JSON.stringify(readyEvolution())).run();
+  const call=(body,key='evolution-http-00001')=>handleGame(new Request('https://game.test/api/game',{method:'POST',headers:{'x-telegram-init-data':signed(timestamp),origin:'https://game.test','content-type':'application/json','idempotency-key':key},body:JSON.stringify(body)}),{DB:db,TELEGRAM_BOT_TOKEN:'test-token'},true);
+  for(const body of [{action:'evolve_pet',petId:'chudik'},{action:'evolve_pet',petId:'unknown',expectedStage:1,expectedCost:30},{action:'evolve_pet',petId:'chudik',expectedStage:1,expectedCost:0}])assert.equal((await call(body)).status,400);
+  let response=await call({action:'evolve_pet',petId:'chudik',expectedStage:0,expectedCost:30});assert.equal(response.status,409);
+  response=await call({action:'evolve_pet',petId:'chudik',expectedStage:1,expectedCost:30});assert.equal(response.status,200);const result=await response.json();assert.match(result.message,/хранителем/);assert.equal(result.state.journey.crystals,70);assert.equal(stageOf(result.state),2);
+  response=await call({action:'evolve_pet',petId:'chudik',expectedStage:1,expectedCost:30});assert.equal((await response.json()).replayed,true);
  }finally{await mf.dispose();}
 });

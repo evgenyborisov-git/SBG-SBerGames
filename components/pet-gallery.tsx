@@ -10,7 +10,7 @@ import {PetVisual, usePetReaction, type Reaction} from './pet-reactions';
 const forms = ['baby', 'grown', 'guardian'] as const;
 const formLabels = ['Малыш', 'Подросший', 'Хранитель'];
 const portrait = (index: number, stage: number) => petPortrait(galleryPets[index].id, stage);
-type GalleryActions = {state?:State;disabled:boolean;onUnlock:(id:PetId)=>void;onVisit:(id:PetId)=>void;currentPetId: PetId; onVisitPet: () => void;};
+type GalleryActions = {state?:State;disabled:boolean;onUnlock:(id:PetId,cost:number)=>void;onVisit:(id:PetId)=>void;currentPetId: PetId; onVisitPet: () => void;};
 
 function PetDetails({initialIndex, onClose, currentPetId, onVisitPet, state,disabled,onUnlock,onVisit}: GalleryActions & {
   initialIndex: number; onClose: () => void;
@@ -18,7 +18,7 @@ function PetDetails({initialIndex, onClose, currentPetId, onVisitPet, state,disa
   const dialog = useRef<HTMLDialogElement>(null);
   const [index, setIndex] = useState(initialIndex);
   const [stage, setStage] = useState(0);
-  const [confirmUnlock,setConfirmUnlock]=useState(false);
+  const [confirmUnlock,setConfirmUnlock]=useState<number|null>(null);
   const pet = galleryPets[index];
   const owned=state?.journey?.owned[pet.id];
   const status=state?unlockStatus(state):null;
@@ -43,7 +43,7 @@ function PetDetails({initialIndex, onClose, currentPetId, onVisitPet, state,disa
     };
   }, []);
   function browse(step: number) {
-    emotion.reset();setConfirmUnlock(false);
+    emotion.reset();setConfirmUnlock(null);
     setIndex(current => (current + step + galleryPets.length) % galleryPets.length);
     setStage(0);
     dialog.current?.scrollTo({top: 0});
@@ -71,7 +71,7 @@ function PetDetails({initialIndex, onClose, currentPetId, onVisitPet, state,disa
         <div className="guardian-title-row"><div><p className="eyebrow">{pet.species}</p><h2 id="guardian-title">{pet.name}</h2></div><Sparkles size={26} aria-hidden="true"/></div>
         <p className="guardian-personality">{pet.personality}</p>
         <p className="guardian-note">Здесь можно посмотреть облики и попробовать реакции без расхода ресурсов. Первый друг выбран однажды. Новых хранителей приглашают за заработанные кристаллы; развитие каждого сохраняется отдельно.</p>
-        <div className="guardian-unlock"><p>{owned?`Уже на острове · уровень ${owned.level}`:`Приглашение: ${status?.cost??30} кристаллов`}</p>{!owned&&<p className="muted">{status?.reasons.join('. ')||'Все условия выполнены — можно пригласить!'}</p>}<button className="guardian-visit" disabled={disabled||!state||(!owned&&!status?.available)} onClick={()=>{if(!owned&&!confirmUnlock){setConfirmUnlock(true);return;}onClose();if(currentPetId===pet.id)onVisitPet();else if(owned)onVisit(pet.id);else onUnlock(pet.id);}}>{currentPetId===pet.id?'На остров к другу':owned?'Посетить друга':confirmUnlock?`Подтвердить · ${status?.cost} кристаллов`:'Пригласить в коллекцию'} <ChevronRight size={17}/></button></div>
+        <div className="guardian-unlock"><p>{owned?`Уже на острове · уровень ${owned.level}`:`Приглашение: ${status?.cost??30} кристаллов`}</p>{!owned&&<p className="muted">{status?.reasons.join('. ')||'Все условия выполнены — можно пригласить!'}</p>}<button className="guardian-visit" disabled={disabled||!state||(!owned&&!status?.available)} onClick={()=>{if(!owned&&confirmUnlock===null){setConfirmUnlock(status!.cost);return;}onClose();if(currentPetId===pet.id)onVisitPet();else if(owned)onVisit(pet.id);else onUnlock(pet.id,confirmUnlock!);}}>{currentPetId===pet.id?'На остров к другу':owned?'Посетить друга':confirmUnlock!==null?`Подтвердить · ${confirmUnlock} кристаллов`:'Пригласить в коллекцию'} <ChevronRight size={17}/></button></div>
         <div className="guardian-browse"><button onClick={() => browse(-1)} aria-label="Предыдущий питомец"><ArrowLeft size={18}/><span>Назад</span></button><span aria-live="polite">{index + 1} / {galleryPets.length}</span><button onClick={() => browse(1)} aria-label="Следующий питомец"><span>Дальше</span><ArrowRight size={18}/></button></div>
       </div>
     </div>
@@ -84,7 +84,7 @@ export function PetGallery(actions: GalleryActions) {
   return <section className="guardian-gallery" aria-labelledby="gallery-title">
     <div className="section-heading"><p className="eyebrow">АТЛАС ЧУДОЗВЕРЕЙ · 12 ДРУЗЕЙ · 36 ОБЛИКОВ</p><h2 id="gallery-title">Большой мир маленьких чудес</h2><p className="muted">От лесной поляны до небесных островов. Познакомься с друзьями и посмотри, какими хранителями они станут.</p></div>
     <div className="biome-filters" role="group" aria-label="Локации питомцев">{galleryBiomes.map((name, i) => <button key={name} aria-pressed={chapter === i} onClick={() => setChapter(i)}>{name}<span>{i === 0 ? 12 : 3}</span></button>)}</div>
-    <p className="gallery-note">Все 12 хранителей доступны для знакомства. Первого друга выбирают один раз. Здесь можно пригласить следующих: 30 кристаллов за второго, 60 — за третьего. Развивай полученных друзей до уровня 2. Сейчас доступна первая глава до 3/12.</p>
+    <p className="gallery-note">Все 12 хранителей доступны для знакомства. Первого друга выбирают один раз. Здесь можно пригласить следующих: 30/60 кристаллов за второго и третьего, затем 90/120/150 до рубежа 6/12. Развивай всех полученных друзей до уровня 2; для четвёртого, пятого и шестого нужны 1/2/3 формы хранителя.</p>
     <div className="creature-grid">{galleryPets.map((pet, index) => (chapter === 0 || pet.chapter === chapter) && <button className="creature-card guardian-card" key={pet.id} onClick={() => setSelected(index)} aria-label={`${pet.name}, ${pet.species} — посмотреть три облика`}>
       <span className="creature-portrait guardian-portrait" style={petThumbnail(pet.id)}><span className="guardian-card-number">{String(index + 1).padStart(2, '0')}</span><span className="guardian-card-badge">3 облика <Sparkles size={11}/></span></span>
       <span className="creature-caption"><small>{pet.biome}</small><strong>{pet.name}</strong><span className="guardian-species">{pet.species}</span><span className="guardian-card-link">{actions.state?.journey?.owned[pet.id]?"Уже в коллекции · посмотреть":"Условия открытия"} <ChevronRight size={13}/></span></span>

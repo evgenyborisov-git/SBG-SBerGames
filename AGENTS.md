@@ -5,3 +5,6 @@
 - Keep stage backgrounds stationary. Animate the pet separately; never apply button press scaling to the whole scene.
 - Tests/typecheck/build must run before publication. Real Telegram/phone QA is separate from automated checks and must be reported honestly.
 - Use the existing Sites project and GitHub PR. Back up source, history and build without secrets. User-facing dates/times use Europe/Moscow.
+
+- First pet choice is one-time; preserve each existing selected pet and earned forms. Collected pets may be visited without resetting shared resources.
+- After verifying a new cumulative backup, delete fully superseded update archives on Drive; retain required base parts, restoration instructions and original handoff. Never delete a required dependency.
