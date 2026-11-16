@@ -1,11 +1,12 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {writeFileSync} from 'node:fs';
+import {writeFileSync,rmSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
-execFileSync(process.execPath,['node_modules/typescript/bin/tsc','components/firefly-game.tsx','components/pet-evolution.tsx','components/first-steps.tsx','components/next-friend.tsx','--outDir','.sites-runtime/ui-test-build','--module','commonjs','--target','es2022','--jsx','react-jsx','--esModuleInterop','--skipLibCheck','--types','node']);
+rmSync('.sites-runtime/ui-test-build',{recursive:true,force:true});
+execFileSync(process.execPath,['node_modules/typescript/bin/tsc','components/firefly-game.tsx','components/pet-evolution.tsx','components/first-steps.tsx','components/next-friend.tsx','--rootDir','.','--outDir','.sites-runtime/ui-test-build','--module','commonjs','--target','es2022','--jsx','react-jsx','--esModuleInterop','--skipLibCheck','--types','node']);
 writeFileSync('.sites-runtime/ui-test-build/package.json','{"type":"commonjs"}');
 const require=createRequire(import.meta.url),{FireflyGame}=require('../.sites-runtime/ui-test-build/components/firefly-game.js'),{PetEvolution}=require('../.sites-runtime/ui-test-build/components/pet-evolution.js'),{initial,transition}=require('../.sites-runtime/ui-test-build/lib/game/rules.js'),{abilities}=require('../.sites-runtime/ui-test-build/lib/game/abilities.js');
 test('game UI renders start, attempt limit, saved result and all guardian descriptions without browser storage',()=>{

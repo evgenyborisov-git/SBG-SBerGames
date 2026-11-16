@@ -1,6 +1,7 @@
-import {test} from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {createHmac} from 'node:crypto';import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';import {execFileSync} from 'node:child_process';
-execFileSync(process.execPath,['node_modules/typescript/bin/tsc','lib/game/rules.ts','lib/game/auth.ts','lib/game/store.ts','lib/game/http.ts','--outDir','.sites-runtime/test-build','--module','commonjs','--target','es2022','--skipLibCheck','--types','@cloudflare/workers-types,node']);
-writeFileSync('.sites-runtime/test-build/package.json','{"type":"commonjs"}');const require=createRequire(import.meta.url);const {initial,transition,restore,day}=require('../.sites-runtime/test-build/rules.js');const {telegramUser,identify}=require('../.sites-runtime/test-build/auth.js');const {handleGame}=require('../.sites-runtime/test-build/http.js');const {act,getState}=require('../.sites-runtime/test-build/store.js');
+import {test} from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {createHmac} from 'node:crypto';import {readFileSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';import {execFileSync} from 'node:child_process';
+rmSync('.sites-runtime/test-build',{recursive:true,force:true});
+execFileSync(process.execPath,['node_modules/typescript/bin/tsc','lib/game/rules.ts','lib/game/auth.ts','lib/game/store.ts','lib/game/http.ts','--rootDir','lib','--outDir','.sites-runtime/test-build','--module','commonjs','--target','es2022','--skipLibCheck','--types','@cloudflare/workers-types,node']);
+writeFileSync('.sites-runtime/test-build/package.json','{"type":"commonjs"}');const require=createRequire(import.meta.url);const {initial,transition,restore,day}=require('../.sites-runtime/test-build/game/rules.js');const {telegramUser,identify}=require('../.sites-runtime/test-build/game/auth.js');const {handleGame}=require('../.sites-runtime/test-build/game/http.js');const {act,getState}=require('../.sites-runtime/test-build/game/store.js');
 const now=Date.UTC(2026,10,6,20,59,59);
 test('onboarding persists first actions, can be skipped and never resets an existing profile',()=>{
  let s=transition(initial(now),'select:owl',now);const before=structuredClone(s);
@@ -15,7 +16,7 @@ test('onboarding persists first actions, can be skipped and never resets an exis
  let earlyGift=transition(initial(now),'daily',now);earlyGift=transition(earlyGift,'select:luna',now);assert.equal(earlyGift.intro.gift,true);assert.equal(earlyGift.journey.crystals,0);
 });
 test('daily plans rotate deterministically while legacy targets and claims survive until Moscow midnight',()=>{
- const {dailyQuests,questPlan}=require('../.sites-runtime/test-build/rules.js');const signatures=new Set();
+ const {dailyQuests,questPlan}=require('../.sites-runtime/test-build/game/rules.js');const signatures=new Set();
  for(let d=0;d<4;d++){
   const t=Date.UTC(2026,10,16+d,9);let s=transition(initial(t),'select:luna',t);
   const qs=dailyQuests(s);assert.equal(s.journey.tasks.plan,questPlan(day(t)));assert.deepEqual(dailyQuests(restore(s,t+1000)),qs);assert.equal(qs.reduce((n,q)=>n+q.reward,0),40);signatures.add(qs.map(q=>q.target).join(','));
@@ -150,7 +151,7 @@ test('HTTP API: authenticated lifecycle, replay, profile isolation and rejected 
 
 test('pet choice preserves progression and migrates existing profiles without restarting them',()=>{
  const selectionTime=now-60000; // Stay within one Moscow day; the global fixture is one second before midnight.
- const {petIds}=require('../.sites-runtime/test-build/pets.js');
+ const {petIds}=require('../.sites-runtime/test-build/game/pets.js');
  let earned=transition(transition(initial(selectionTime),'daily',selectionTime),'offer',selectionTime);
  for(let i=0;i<4;i++)earned=transition(earned,'play',selectionTime+i*2000);
  for(const petId of petIds){
@@ -223,7 +224,7 @@ function matureChapter(pet='chudik'){
  let s=transition(initial(now),'select:'+pet,now);s.level=2;s.xp=35;s.collection.push('🌱 Первый росток');s=restore(s,now);s.journey.owned[pet]={level:s.level,xp:s.xp,collection:[...s.collection]};s.journey.crystals=100;return s;
 }
 test('chapter migration is additive and repeatable for every starter; forms are not species',()=>{
- for(const pet of require('../.sites-runtime/test-build/pets.js').petIds){
+ for(const pet of require('../.sites-runtime/test-build/game/pets.js').petIds){
   const old={...initial(now),petId:pet,level:8,xp:45,coins:123,lastDaily:day(now),offerDone:true,collection:['egg','grown','guardian']};
   const s=restore(old,now);assert.equal(Object.keys(s.journey.owned).length,1);assert.equal(s.journey.owned[pet].level,8);assert.equal(s.journey.firstPetId,pet);assert.equal(s.coins,123);assert.equal(s.journey.crystals,0);assert.deepEqual(restore(s,now),s);assert.deepEqual(old.collection,['egg','grown','guardian']);
  }
@@ -252,7 +253,7 @@ test('quest rewards, cap and Moscow midnight cannot be claimed twice or for a st
  assert.throws(()=>transition(s,`quest:${day(t)}:play`,now+1000),e=>e.code==='quest_expired');
 });
 test('all 12 starters reach 3/12 without offers in a deterministic two-day scenario',()=>{
- const ids=require('../.sites-runtime/test-build/pets.js').petIds;
+ const ids=require('../.sites-runtime/test-build/game/pets.js').petIds;
  for(const starter of ids){
   let t=Date.UTC(2026,10,15,9),s=transition(initial(t),`select:${starter}`,t);const others=ids.filter(id=>id!==starter);let games=0;
   for(let d=0;d<2;d++){
@@ -261,8 +262,8 @@ test('all 12 starters reach 3/12 without offers in a deterministic two-day scena
     t+=900000; // Return after 15 min: enough energy, no synthetic resources.
     s=transition(s,`play:${s.petId}`,t);games++;
     for(const q of ['play','care','xp']){try{s=transition(s,`quest:${day(t)}:${q}`,t);}catch(e){assert.ok(['quest_incomplete','already_claimed'].includes(e.code));}}
-    if(Object.keys(s.journey.owned).length===1&&require('../.sites-runtime/test-build/rules.js').unlockStatus(s).available){s=transition(s,`unlock:${others[0]}`,t);s=transition(s,`visit:${others[0]}`,t);}
-    if(Object.keys(s.journey.owned).length===2&&require('../.sites-runtime/test-build/rules.js').unlockStatus(s).available)s=transition(s,`unlock:${others[1]}`,t);
+    if(Object.keys(s.journey.owned).length===1&&require('../.sites-runtime/test-build/game/rules.js').unlockStatus(s).available){s=transition(s,`unlock:${others[0]}`,t);s=transition(s,`visit:${others[0]}`,t);}
+    if(Object.keys(s.journey.owned).length===2&&require('../.sites-runtime/test-build/game/rules.js').unlockStatus(s).available)s=transition(s,`unlock:${others[1]}`,t);
    }
   }
   assert.equal(Object.keys(s.journey.owned).length,3,starter);assert.ok(s.journey.crystals>=0);assert.equal(s.offerDone,false);assert.equal(s.journey.firstPetId,starter);
@@ -302,7 +303,7 @@ test('HTTP collection operations validate input, reject unearned pets and replay
  }finally{await mf.dispose();}
 });
 
-const stageOf=s=>require('../.sites-runtime/test-build/rules.js').petStage(s);
+const stageOf=s=>require('../.sites-runtime/test-build/game/rules.js').petStage(s);
 function readyEvolution(){let s=matureChapter();s.level=3;s.xp=0;s.journey.owned.chudik={level:3,xp:0,collection:[...s.collection],stage:1};return s;}
 test('guardian evolution charges once, preserves level and grants real XP ability without multiplying daily crystals',()=>{
  let s=readyEvolution();assert.equal(stageOf(s),1);
@@ -330,7 +331,7 @@ test('quoted unlock cost cannot change silently, and second chapter stops at six
  assert.throws(()=>transition(s,'unlock:griffin:0',now),e=>e.code==='unlock_locked');
 });
 test('all starter choices reach 6/12 with three paid evolutions using only earned daily resources',()=>{
- const ids=require('../.sites-runtime/test-build/pets.js').petIds,rules=require('../.sites-runtime/test-build/rules.js');
+ const ids=require('../.sites-runtime/test-build/game/pets.js').petIds,rules=require('../.sites-runtime/test-build/game/rules.js');
  for(const starter of ids){
   let t=Date.UTC(2026,10,16,9),s=transition(initial(t),`select:${starter}`,t),finishedDay=0;
   for(let d=0;d<12&&Object.keys(s.journey.owned).length<6;d++){
@@ -374,7 +375,7 @@ test('HTTP evolve validates exact quote, commits form, and returns a human messa
 });
 
 test('third chapter preserves 6/12 progress and gives precise prerequisites and prices up to 12',()=>{
- const ids=require('../.sites-runtime/test-build/pets.js').petIds,rules=require('../.sites-runtime/test-build/rules.js');let s=restore(initial(now),now);s.petId=ids[0];s.journey.firstPetId=ids[0];s.journey.crystals=2000;
+ const ids=require('../.sites-runtime/test-build/game/pets.js').petIds,rules=require('../.sites-runtime/test-build/game/rules.js');let s=restore(initial(now),now);s.petId=ids[0];s.journey.firstPetId=ids[0];s.journey.crystals=2000;
  for(let i=0;i<6;i++)s.journey.owned[ids[i]]={level:3,xp:i,stage:i<3?2:1,collection:['egg','grown']};
  const original=structuredClone(s);let status=rules.unlockStatus(s);assert.equal(status.cost,180);assert.equal(status.available,false);assert.ok(status.reasons.some(x=>x.includes('4')));
  s.journey.owned[ids[3]].stage=2;
@@ -389,15 +390,15 @@ test('third chapter preserves 6/12 progress and gives precise prerequisites and 
  const stable=structuredClone(s);s=transition(s,`visit:${ids[11]}`,now);assert.equal(s.journey.crystals,stable.journey.crystals);assert.equal(rules.collectionMilestones(s).complete,true);assert.deepEqual(restore(s,now).journey,s.journey);
 });
 test('milestones count distinct owned species, never previews or evolution forms',()=>{
- const {collectionMilestones}=require('../.sites-runtime/test-build/rules.js');let s=readyEvolution();
+ const {collectionMilestones}=require('../.sites-runtime/test-build/game/rules.js');let s=readyEvolution();
  assert.equal(collectionMilestones(s).count,1);s=transition(s,'evolve:chudik:1:30',now);assert.equal(collectionMilestones(s).count,1);
  for(const count of [0,1,2,3,5,6,11,12]){
-  const ids=require('../.sites-runtime/test-build/pets.js').petIds;const state=restore(initial(now),now);for(const id of ids.slice(0,count))state.journey.owned[id]={level:1,xp:0,stage:0,collection:['egg']};
+  const ids=require('../.sites-runtime/test-build/game/pets.js').petIds;const state=restore(initial(now),now);for(const id of ids.slice(0,count))state.journey.owned[id]={level:1,xp:0,stage:0,collection:['egg']};
   const m=collectionMilestones(state);assert.equal(m.target,count<3?3:count<6?6:12);assert.equal(m.count,count);assert.equal(m.complete,count===12);
  }
 });
 test('all 12 starters can complete the full collection without offers at both tested activity levels',()=>{
- const ids=require('../.sites-runtime/test-build/pets.js').petIds,rules=require('../.sites-runtime/test-build/rules.js');const report=[];
+ const ids=require('../.sites-runtime/test-build/game/pets.js').petIds,rules=require('../.sites-runtime/test-build/game/rules.js');const report=[];
  for(const gamesPerDay of [10,4])for(const starter of ids){
   let t=Date.UTC(2026,10,16,9),s=transition(initial(t),`select:${starter}`,t),finishedDay=0,evolutions=0;const maxDays=gamesPerDay===10?45:75;
   for(let d=0;d<maxDays&&Object.keys(s.journey.owned).length<12;d++){
@@ -421,7 +422,7 @@ test('all 12 starters can complete the full collection without offers at both te
 test('D1 final invitation is committed once, survives replays and remains isolated',async()=>{
  const {Miniflare}=await import('miniflare');const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("ok")}}',d1Databases:['DB'],compatibilityDate:'2026-01-01'});
  try{
-  const db=await mf.getD1Database('DB');for(const sql of readFileSync('drizzle/0000_lame_havok.sql','utf8').split('--> statement-breakpoint'))await db.prepare(sql.trim()).run();const ids=require('../.sites-runtime/test-build/pets.js').petIds;
+  const db=await mf.getD1Database('DB');for(const sql of readFileSync('drizzle/0000_lame_havok.sql','utf8').split('--> statement-breakpoint'))await db.prepare(sql.trim()).run();const ids=require('../.sites-runtime/test-build/game/pets.js').petIds;
   const state=restore(initial(now),now);state.petId='chudik';state.journey.firstPetId='chudik';state.journey.crystals=330;
   for(const id of ids.slice(0,11))state.journey.owned[id]={level:3,xp:0,stage:2,collection:['egg','grown','guardian']};
   await db.prepare('INSERT INTO players VALUES (?,?,0)').bind('finalist',JSON.stringify(state)).run();const results=await Promise.allSettled(Array.from({length:10},(_,i)=>act(db,'finalist',`final-${i}`,'unlock:griffin:330',now)));
@@ -431,12 +432,12 @@ test('D1 final invitation is committed once, survives replays and remains isolat
 });
 
 const flyTime=Date.UTC(2026,10,16,9);
-const flyRules=()=>require('../.sites-runtime/test-build/fireflies.js');
+const flyRules=()=>require('../.sites-runtime/test-build/game/fireflies.js');
 function roundHits(round){return Array.from({length:12},(_,target)=>({target,at:flyRules().fireflyTarget(round,target).start+100}));}
 function finishAction(round,hits=roundHits(round)){return `firefly_finish:${round.id}:${hits.map(h=>`${h.target}@${h.at}`).join(',')}`;}
 function flyPlayer(petId='chudik',guardian=false){let s=transition(initial(flyTime),`select:${petId}`,flyTime);if(guardian){s.level=3;s.journey.owned[petId]={level:3,xp:0,stage:2,collection:['egg','grown','guardian']};}return s;}
 test('all twelve guardians have distinct abilities, active only in guardian form',()=>{
- const {abilities,careStats}=require('../.sites-runtime/test-build/abilities.js'),ids=require('../.sites-runtime/test-build/pets.js').petIds;
+ const {abilities,careStats}=require('../.sites-runtime/test-build/game/abilities.js'),ids=require('../.sites-runtime/test-build/game/pets.js').petIds;
  assert.equal(new Set(ids.map(id=>abilities[id].title)).size,12);
  for(const id of ids)assert.deepEqual(careStats(id,false),{feedCost:5,feedEnergy:20,feedXP:10,playEnergy:15,playXP:25,playCoins:3});
  const cases=[['squirrel','play','energy',58],['badger','feed','coins',46],['deer','feed','energy',95],['whale','feed','xp',15],['lynx','play','xp',33],['griffin','play','coins',54]];

@@ -1,9 +1,10 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {readFileSync,readdirSync,writeFileSync} from 'node:fs';
+import {readFileSync,readdirSync,writeFileSync,rmSync} from 'node:fs';
 import {createRequire} from 'node:module';
-execFileSync(process.execPath,['node_modules/typescript/bin/tsc','lib/pilot-http.ts','lib/client-diagnostics.ts','lib/game/http.ts','--outDir','.sites-runtime/pilot-test-build','--module','commonjs','--target','es2022','--skipLibCheck','--types','@cloudflare/workers-types,node']);
+rmSync('.sites-runtime/pilot-test-build',{recursive:true,force:true});
+execFileSync(process.execPath,['node_modules/typescript/bin/tsc','lib/pilot-http.ts','lib/client-diagnostics.ts','lib/game/http.ts','--rootDir','lib','--outDir','.sites-runtime/pilot-test-build','--module','commonjs','--target','es2022','--skipLibCheck','--types','@cloudflare/workers-types,node']);
 writeFileSync('.sites-runtime/pilot-test-build/package.json','{"type":"commonjs"}');
 const require=createRequire(import.meta.url);
 const {getState,act}=require('../.sites-runtime/pilot-test-build/game/store.js');
