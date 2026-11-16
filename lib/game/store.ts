@@ -1,19 +1,23 @@
 import { initial, restore, transition, GameError, type Action, type State } from './rules';
+import {observePlayer} from '../pilot';
 type Row={state:string;revision:number};
-export async function getState(db:D1Database,id:string,now=Date.now()){
- await db.prepare('INSERT OR IGNORE INTO players (id,state,revision) VALUES (?,?,0)').bind(id,JSON.stringify(initial(now))).run();
+export async function getState(db:D1Database,id:string,now=Date.now(),observe=false){
+ const inserted=await db.prepare('INSERT OR IGNORE INTO players (id,state,revision) VALUES (?,?,0)').bind(id,JSON.stringify(initial(now))).run();
  const row=await db.prepare('SELECT state,revision FROM players WHERE id=?').bind(id).first<Row>();
  if(!row)throw new Error('player_missing');
+ if(observe)await observePlayer(db,id,inserted.meta.changes===1,now);
  return {state:restore(JSON.parse(row.state),now),revision:row.revision};
 }
 export async function act(db:D1Database,id:string,key:string,action:Action,now=Date.now()){
  for(let attempt=0;attempt<8;attempt++){
+  // Read the snapshot before the receipt: a concurrent commit must not make a
+  // retry fail validation against state that already includes that same action.
+  const {state,revision}=await getState(db,id,now);
   const replay=await db.prepare('SELECT action FROM operations WHERE player_id=? AND key=?').bind(id,key).first<{action:string}>();
   if(replay){
    if(replay.action!==action)throw new GameError('key_conflict','Этот запрос уже использован для другого действия');
    return {...await getState(db,id,now),replayed:true};
   }
-  const {state,revision}=await getState(db,id,now);
   const next=transition(state,action,now);
   try{
    // D1 batch is one transaction. Only the revision winner inserts a receipt.
