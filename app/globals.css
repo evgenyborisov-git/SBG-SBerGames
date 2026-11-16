@@ -63,3 +63,113 @@ h1{line-height:1.3}h2,h3{line-height:1.4}.brand{letter-spacing:-.06em}.brand sma
 
 .firefly-game h2{margin:8px 0}.firefly-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}.firefly-companion{width:68px;height:68px;flex-shrink:0;background-size:cover;border-radius:20px}.firefly-score{display:flex;justify-content:space-between;margin:18px 0 10px}.firefly-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:14px;border-radius:24px;background:radial-gradient(circle at 50% 20%,#334c3f,#152c28);aspect-ratio:1}.firefly-board button{border:1px solid #48634d;border-radius:22px;background:#253d32;color:#71825b;display:flex;align-items:center;justify-content:center;font-size:30px;min-height:52px;touch-action:manipulation}.firefly-board button:disabled{opacity:1}.firefly-board button.lit{color:#fff4a9;background:#61733d;box-shadow:0 0 22px #ead76f88,inset 0 0 18px #fff4a933;cursor:pointer;animation:firefly-glow .5s ease-in-out infinite alternate}.firefly-board button.hint:not(.lit){border:2px dashed #c5bdf0}.firefly-board button:focus-visible{outline:3px solid #c7afff;outline-offset:3px}.firefly-caption{font-size:12px;line-height:1.5;color:#65735d}.firefly-actions{display:grid;gap:8px;margin:16px 0}.firefly-actions .evolution-confirm{display:flex;align-items:center;justify-content:center;gap:8px}.firefly-result{padding:18px;margin:18px 0;border-radius:20px;background:#eff3dc;color:#405d2d}.firefly-result strong{display:block;margin:8px 0}.firefly-result p{margin:8px 0;line-height:1.5}@keyframes firefly-glow{from{filter:brightness(1)}to{filter:brightness(1.2)}}@media(prefers-reduced-motion:reduce){.firefly-board button.lit{animation:none}}
 .firefly-board button{position:relative}.firefly-cell-number{position:absolute;top:7px;left:9px;font-size:11px;opacity:.6}.firefly-board:focus-visible{outline:3px solid #ac93df;outline-offset:4px}
+
+/* Shared spacing for text-heavy panels, including narrow Telegram viewports. */
+.island-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.island-aside > * { margin-block: 0; }
+.panel { line-height: 1.65; }
+.panel > .eyebrow { margin-bottom: 12px; }
+.panel h2 { margin-top: 0; margin-bottom: 16px; }
+.panel .muted { line-height: 1.75; }
+.collection-journey .crystal-balance { margin-bottom: 12px; }
+.collection-journey .text-link { margin-top: 20px; }
+.evolution-card > p + p { margin-top: 12px; }
+.evolution-card > .evolution-confirm { margin-top: 20px; }
+.ability-note { padding: 16px; line-height: 1.75; }
+.daily-section .section-title { margin: 0 0 16px; gap: 12px; }
+.reward-card { line-height: 1.6; }
+.reward-card > span:nth-child(2) { min-width: 0; }
+.reward-art, .reward-arrow { flex-shrink: 0; }
+.reward-card small { font-size: 9px; margin-bottom: 6px; }
+.reward-description { font-size: 11px; margin-top: 7px; }
+.quest-row { padding-block: 22px; gap: 20px; }
+.daily-quests > .muted { margin-bottom: 20px; }
+.quest-row strong { display: block; line-height: 1.5; }
+.quest-row p { margin-block: 8px 12px; line-height: 1.7; }
+.quest-row progress { margin: 0; }
+.quest-row button { flex-shrink: 0; min-height: 44px; line-height: 1.5; }
+.quest-row:last-child { padding-bottom: 0; }
+.firefly-heading { align-items: flex-start; margin-bottom: 16px; gap: 16px; }
+.firefly-heading > div { min-width: 0; }
+.firefly-heading .eyebrow { margin-bottom: 12px; }
+.firefly-heading h2 { margin: 0; overflow-wrap: anywhere; }
+.firefly-caption { margin-top: 16px; line-height: 1.7; }
+.firefly-caption + .evolution-confirm { margin-top: 20px; line-height: 1.6; }
+.firefly-actions { gap: 12px; margin-block: 22px; }
+.firefly-actions .evolution-confirm { line-height: 1.6; }
+.firefly-actions .quiet-button { margin-top: 0; min-height: 44px; }
+.gift-list { display: grid; gap: 20px; min-width: 0; }
+.gift-list > * { margin: 0; }
+.gift-list .muted { margin: 0; }
+.gift-list .daily-quests > .muted { margin-bottom: 20px; }
+.gift-hero h2 { line-height: 1.45; }
+.album-heading { gap: 24px; align-items: flex-start; }
+.album-heading > div { min-width: 0; }
+.album-count { flex-shrink: 0; line-height: 1.3; }
+.album-card p { line-height: 1.7; }
+.album-card h3 { margin-block: 10px; }
+.collection-milestones > .muted { display: block; }
+.milestone-steps small { line-height: 1.6; }
+.evolution-strip span, .evolution-strip small { line-height: 1.6; }
+.stats > div > small { display: block; margin-top: 8px; line-height: 1.6; }
+.action-buttons button { line-height: 1.5; }
+.action-buttons button small { font-size: 10px; line-height: 1.6; margin-top: 6px; }
+.quiet-button { line-height: 1.6; flex-wrap: wrap; }
+.discovery-banner { line-height: 1.6; }
+.discovery-banner svg { flex-shrink: 0; }
+.guardian-title-row { align-items: flex-start; }
+.guardian-title-row .eyebrow { margin-bottom: 10px; }
+.guardian-personality { margin-block: 16px; }
+.guardian-note { padding-top: 16px; }
+.guardian-unlock { margin-top: 20px; padding: 20px; line-height: 1.75; }
+.guardian-unlock > p + p { margin-top: 12px; }
+.guardian-unlock .guardian-visit { margin-top: 20px; padding: 14px; line-height: 1.6; }
+.guardian-browse { margin-top: 20px; padding-top: 8px; }
+.picker-personality h2 { margin-block: 12px; }
+.picker-personality .eyebrow { font-size: 9px; line-height: 1.7; }
+
+@media (max-width: 760px) {
+  .island-aside { gap: 24px; }
+  .home-grid, .gifts-layout, .guide-grid { gap: 24px; }
+  .panel { padding: 24px; }
+  .album-heading { flex-direction: column; gap: 16px; }
+  .album-count { margin-left: 0; }
+  .album-grid { grid-template-columns: 1fr; gap: 20px; }
+  .album-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); align-items: center; }
+  .album-card > div:last-child { padding: 16px; }
+  .album-card small { font-size: 9px; letter-spacing: 1px; }
+  .album-card h3 { font-size: 17px; }
+  .album-card p { font-size: 12px; }
+  .guardian-copy { padding: 24px 20px 16px; }
+  .guide-card { padding: 28px 24px; }
+  .guide-card h2 { line-height: 1.5; }
+  .evolution-strip { gap: 8px; }
+  .evolution-strip small { font-size: 10px; flex-wrap: wrap; }
+  .stats { gap: 16px; }
+  .stats > div > small { font-size: 10px; }
+}
+
+@media (max-width: 420px) {
+  .panel { padding: 22px 20px; }
+  .quest-row { flex-direction: column; align-items: stretch; gap: 16px; }
+  .quest-row button { max-width: none; width: 100%; }
+  .firefly-companion { width: 52px; height: 52px; border-radius: 16px; }
+  .firefly-heading { gap: 12px; }
+  .firefly-heading h2 { font-size: 22px; }
+  .action-buttons { gap: 10px; }
+  .action-buttons button { flex-direction: column; padding: 14px 8px; gap: 8px; }
+  .action-buttons button small { font-size: 9px; }
+  .guardian-copy { padding-inline: 20px; }
+  .guardian-unlock { padding: 16px; }
+  .picker-preview { grid-template-columns: 1fr; }
+  .picker-touch { max-width: 320px; }
+  .picker-personality { padding: 20px; }
+  .picker-personality > p:last-child { font-size: 12px; line-height: 1.75; }
+  .milestone-steps { gap: 8px; }
+  .milestone-steps > div { padding: 14px 6px; }
+}
