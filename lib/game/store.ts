@@ -1,9 +1,11 @@
 import { initial, restore, transition, GameError, type Action, type State } from './rules';
+import {observePlayer} from '../pilot';
 type Row={state:string;revision:number};
-export async function getState(db:D1Database,id:string,now=Date.now()){
- await db.prepare('INSERT OR IGNORE INTO players (id,state,revision) VALUES (?,?,0)').bind(id,JSON.stringify(initial(now))).run();
+export async function getState(db:D1Database,id:string,now=Date.now(),observe=false){
+ const inserted=await db.prepare('INSERT OR IGNORE INTO players (id,state,revision) VALUES (?,?,0)').bind(id,JSON.stringify(initial(now))).run();
  const row=await db.prepare('SELECT state,revision FROM players WHERE id=?').bind(id).first<Row>();
  if(!row)throw new Error('player_missing');
+ if(observe)await observePlayer(db,id,inserted.meta.changes===1,now);
  return {state:restore(JSON.parse(row.state),now),revision:row.revision};
 }
 export async function act(db:D1Database,id:string,key:string,action:Action,now=Date.now()){

@@ -1,5 +1,7 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
+import {queueDiagnostic,flushDiagnostics,supportText} from '../lib/client-diagnostics';
+import type {ClientErrorCode} from '../lib/pilot';
 import {artBackground} from '../lib/art-resolution';
 import {FirstSteps} from '../components/first-steps';
 import {NextFriend} from '../components/next-friend';
@@ -16,7 +18,7 @@ import {dailyQuests,unlockStatus,petStage,type State} from '../lib/game/rules';
 import {PetGallery} from '../components/pet-gallery';
 import {PetVisual,usePetReaction,type Reaction} from '../components/pet-reactions';
 import {Sparkles,Leaf,Home as HomeIcon,PawPrint,Gift,BookOpen,Heart,Carrot,Volleyball,Zap,Star,Coins,ChevronRight,Check,Lock,Moon} from 'lucide-react';
-type Snapshot={state:State;revision:number;mode:string;serverTime:number;message?:string};
+type Snapshot={state:State;revision:number;mode:string;serverTime:number;message?:string;pilotAdmin?:boolean};
 declare global {interface Window{Telegram?:{WebApp:{initData:string;ready:()=>void;expand:()=>void;HapticFeedback?:{notificationOccurred:(type:string)=>void}}}}}
 export default function Home(){
  const [data,setData]=useState<Snapshot|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState('Подключаемся к лаборатории…'),[error,setError]=useState(false),[tab,setTab]=useState('pet');
@@ -28,22 +30,27 @@ export default function Home(){
  const [petLine,setPetLine]=useState('Как хорошо, что ты здесь!');
  function react(index:Reaction,line:string,nextStage=stage){emotion.trigger(index,nextStage);setPetLine(line);}
  useEffect(()=>{if(reaction===0)setPetLine('Как хорошо, что ты здесь!');},[reaction]);
- const [sdkError,setSdkError]=useState(false);
+ const [sdkError,setSdkError]=useState(false),[failure,setFailure]=useState<{code:string;requestId:string}|null>(null),[copied,setCopied]=useState(false);
  const snapshotReceived=useRef(0),introTarget=useRef(false);
  const pending=useRef<{action:string;key:string;petId?:PetId;questId?:string;questDay?:string;expectedStage?:number;expectedCost?:number;roundId?:string;hits?:FireflyHit[]}|null>(null),lock=useRef(false),initData=useRef('');
+ function reportClient(code:ClientErrorCode,eventId=crypto.randomUUID()){queueDiagnostic(code,eventId);void flushDiagnostics(initData.current);return eventId;}
+ useEffect(()=>{if(emotion.failed)reportClient('art_load_failed');},[emotion.failed]);
  async function request(action?:string,selectedPet?:PetId,questId?:string,quote?:{expectedStage?:number;expectedCost:number},roundResult?:{roundId:string;hits:FireflyHit[]}){
   if(lock.current)return;lock.current=true;setBusy(true);setError(false);
   const headers:Record<string,string>={};if(initData.current)headers['x-telegram-init-data']=initData.current;
   if(action){pending.current??={action,key:crypto.randomUUID(),...quote,...roundResult,...(selectedPet?{petId:selectedPet}:['feed','play'].includes(action)&&data?.state.petId?{petId:data.state.petId}:{}),...(questId?{questId,questDay:data?.state.journey?.tasks.day}:{})};headers['Content-Type']='application/json';headers['Idempotency-Key']=pending.current.key;}
+  let failureCode='network_error',failureId=crypto.randomUUID(),serverRejected=false;
   try{
    const response=await fetch('/api/game',{method:action?'POST':'GET',headers,body:action?JSON.stringify({...pending.current!,key:undefined,action:pending.current!.action,...(pending.current!.petId?{petId:pending.current!.petId}:{}),...(pending.current!.questId?{questId:pending.current!.questId,questDay:pending.current!.questDay}:{})}):undefined,signal:AbortSignal.timeout(15000)});
-   const result=await response.json().catch(()=>{throw new Error('Сервер не ответил. Проверь соединение и повтори запрос');}) as Snapshot & {message?:string};
-   if(!response.ok){if(response.status<500)pending.current=null;if(response.status===401)setData(null);if(response.status===409){try{const fresh=await fetch('/api/game',{headers,signal:AbortSignal.timeout(10000)});if(fresh.ok){const snapshot=await fresh.json() as Snapshot;snapshotReceived.current=performance.now();setData(snapshot);}}catch{}}throw new Error(result.message||'Не удалось связаться с сервером');}
-   if(action)pending.current=null;snapshotReceived.current=performance.now();setData(result);setMessage(result.message||'Прогресс сохранён на сервере');
+   const serverRequestId=response.headers.get('x-request-id');if(serverRequestId&&/^[a-f0-9-]{36}$/.test(serverRequestId))failureId=serverRequestId;failureCode='invalid_response';
+   const result=await response.json().catch(()=>{throw new Error('Сервер не ответил. Проверь соединение и повтори запрос');}) as Snapshot & {message?:string;error?:string};
+   if(response.ok&&(!result.state||!Number.isSafeInteger(result.revision)))throw new Error('Сервер прислал неполный ответ. Повтори запрос');
+   if(!response.ok){serverRejected=true;failureCode=result.error&&/^[a-z_]{1,40}$/.test(result.error)?result.error:'unavailable';if(response.status<500)pending.current=null;if(response.status===401)setData(null);if(response.status===409){try{const fresh=await fetch('/api/game',{headers,signal:AbortSignal.timeout(10000)});if(fresh.ok){const snapshot=await fresh.json() as Snapshot;snapshotReceived.current=performance.now();setData(snapshot);}}catch{}}throw new Error(result.message||'Не удалось связаться с сервером');}
+   if(action)pending.current=null;setFailure(null);setCopied(false);void flushDiagnostics(initData.current);snapshotReceived.current=performance.now();setData(result);setMessage(result.message||'Прогресс сохранён на сервере');
    if(action==='dismiss_intro'){if(introTarget.current){setTab('collection');window.scrollTo({top:0,behavior:'instant'});}introTarget.current=false;}else if(action==='select_pet'||action==='visit_pet'){setTab('pet');setPetLine('Как хорошо, что ты здесь!');}else if(action&&!['firefly_start','intro_pet'].includes(action))react(action==='feed'?1:action==='play'?2:5,action==='feed'?'Хрум-хрум… любимое угощение!':action==='play'?'Ещё раз! Лови солнечный мячик!':action==='evolve_pet'?'Моя магия проснулась! Давай играть вместе!':'Ура! Сегодня случилось маленькое чудо!',petStage(result.state));
    // Haptics are optional; a device error must not mark a saved action failed.
    if(action){try{window.Telegram?.WebApp.HapticFeedback?.notificationOccurred('success');}catch{}}
-  }catch(e){setError(true);setMessage(e instanceof Error&&e.name!=='TimeoutError'&&e.name!=='TypeError'?e.message:'Нет соединения. Проверь интернет и повтори запрос');}
+  }catch(e){if(!serverRejected&&e instanceof Error&&e.name==='TimeoutError')failureCode='network_timeout';setFailure({code:failureCode,requestId:failureId});setCopied(false);if(!serverRejected&&['network_error','network_timeout','invalid_response'].includes(failureCode))reportClient(failureCode as ClientErrorCode,failureId);setError(true);setMessage(e instanceof Error&&e.name!=='TimeoutError'&&e.name!=='TypeError'?e.message:'Нет соединения. Проверь интернет и повтори запрос');}
   finally{setBusy(false);lock.current=false;}
  }
  useEffect(()=>{
@@ -55,18 +62,19 @@ export default function Home(){
    const tg=window.Telegram?.WebApp;
    try{tg?.ready();tg?.expand();}catch{}
    if(started)return;
-   if(inTelegram&&!tg?.initData&&!launch){setSdkError(true);setError(true);setMessage('Не удалось подключиться к Telegram. Обнови приложение или открой его заново из бота');return;}
+   if(inTelegram&&!tg?.initData&&!launch){setFailure({code:'sdk_unavailable',requestId:reportClient('sdk_unavailable')});setSdkError(true);setError(true);setMessage('Не удалось подключиться к Telegram. Обнови приложение или открой его заново из бота');return;}
    started=true;setSdkError(false);initData.current=tg?.initData||launch;
    try{tg?.ready();tg?.expand();}catch{}
    void request();
   };
-  const script=document.createElement('script');script.src='https://telegram.org/js/telegram-web-app.js';script.async=true;script.onload=boot;script.onerror=boot;
+  const script=document.createElement('script');script.src='https://telegram.org/js/telegram-web-app.js';script.async=true;script.onload=boot;script.onerror=()=>{if(inTelegram)reportClient('sdk_unavailable');boot();};
   if(window.Telegram?.WebApp)boot();else {document.head.appendChild(script);if(launch||!inTelegram)boot();}
   // A stalled SDK must not leave the interface loading indefinitely.
-  const timeout=setTimeout(boot,8000);
+  const timeout=setTimeout(()=>{if(inTelegram&&!window.Telegram?.WebApp)reportClient('sdk_unavailable');boot();},8000);
   const refresh=()=>{if(started&&document.visibilityState==='visible'&&!pending.current)void request();};document.addEventListener('visibilitychange',refresh);
+  const online=()=>{void flushDiagnostics(initData.current);};window.addEventListener('online',online);
   const interval=setInterval(refresh,60000);
-  return()=>{active=false;clearTimeout(timeout);clearInterval(interval);document.removeEventListener('visibilitychange',refresh);script.remove();};
+  return()=>{active=false;clearTimeout(timeout);clearInterval(interval);window.removeEventListener('online',online);document.removeEventListener('visibilitychange',refresh);script.remove();};
  },[]);
  const s=data?.state;const date=data?new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(data.serverTime):'';
  const disabled=busy||!s||!!pending.current;
@@ -84,7 +92,7 @@ export default function Home(){
  <div className="publisher-bar"><a className="publisher-name" href="https://sberseller.ru/" target="_blank" rel="noopener noreferrer" aria-label="СберСеллер — официальный сайт"><span className="publisher-orbit" aria-hidden="true"/><span>СберСеллер</span></a><span className="publisher-caption">ИГРОВОЙ МИР <span>ЧУДОЗВЕРЕЙ</span></span></div>
  <header className="app-header"><a className="brand" href="/" aria-label="Чудозвери — домой"><span className="brand-mark"><PawPrint size={25}/></span><span>Чудозвери<small>МАЛЕНЬКАЯ ЗАБОТА · БОЛЬШАЯ ДРУЖБА</small></span></a><span className="world-tag"><span className="live-dot"/>Волшебный остров</span></header>
  <div className="resource-bar" aria-label="Твои ресурсы"><div><span className="resource-icon gold"><Coins/></span><span><strong>{s?.coins??'—'}</strong><small>монеты</small></span></div><div><span className="resource-icon green"><Zap/></span><span><strong>{s?.energy??'—'}<em>/100</em></strong><small>энергия</small></span></div><div><span className="resource-icon purple"><Star/></span><span><strong>{s?.level??'—'}</strong><small>уровень</small></span></div></div>
- <div role="status" aria-live="polite" className={'status '+(error?'error':'')}>{busy?(s?'Сохраняем твоё маленькое чудо…':'Открываем остров…'):message}{error&&<button className="retry" disabled={busy} onClick={()=>sdkError?window.location.reload():request(pending.current?.action)}>{sdkError?'Обновить':'Повторить'}</button>}</div>
+ <div role="status" aria-live="polite" className={'status '+(error?'error':'')}>{busy?(s?'Сохраняем твоё маленькое чудо…':'Открываем остров…'):message}{error&&<button className="retry" disabled={busy} onClick={()=>sdkError?window.location.reload():request(pending.current?.action)}>{sdkError?'Обновить':'Повторить'}</button>}{error&&failure&&<details className="support-details"><summary>Диагностика для поддержки</summary><pre>{supportText(failure.code,failure.requestId,!!initData.current||sdkError,!!window.Telegram?.WebApp)}</pre><button className="retry" onClick={async()=>{try{await navigator.clipboard.writeText(supportText(failure.code,failure.requestId,!!initData.current||sdkError,!!window.Telegram?.WebApp));setCopied(true);}catch{setCopied(false);}}}>{copied?'Скопировано':'Скопировать'}</button></details>}</div>
  {!s&&error&&!initData.current&&!sdkError&&<a className="signin" href="/signin-with-chatgpt?return_to=/" target="_top">Войти для браузерного теста <ChevronRight size={16}/></a>}
  {!choosing&&<div className="page-heading brand-focus"><div><p className="eyebrow"><Sparkles size={13}/> МИР, В КОТОРОМ ТЕБЯ ЖДУТ</p><h1>{tab==='pet'?'Здесь живёт твоё чудо':tab==='collection'?'У каждого — своя магия':tab==='gifts'?'Маленькие радости дня':'Большие чудеса начинаются с заботы'}</h1></div><span className="chapter">{tab==='pet'?'01':tab==='collection'?'02':tab==='gifts'?'03':'04'} <span>/ ЧУДОЗВЕРИ</span></span></div>}
  {choosing&&<PetPicker initialPetId={pet.id} stage={stage} disabled={disabled} onConfirm={id=>request('select_pet',id)} errorMessage={error?message:undefined} onRetry={error&&pending.current?()=>request(pending.current?.action):undefined}/>}
@@ -93,7 +101,7 @@ export default function Home(){
  {!choosing&&tab==='collection'&&<><section className="album-heading panel"><div><p className="eyebrow">АЛЬБОМ ВАШЕЙ ДРУЖБЫ</p><h2>Твоя коллекция хранителей</h2><p className="muted">Собери всех 12 друзей и открой их магию. ✦ {journey?.crystals??0} кристаллов</p></div><span className="album-count">{chapter?.count??0}<small> / 12</small></span></section>{s&&<CollectionProgress state={s}/>}<p className="eyebrow">ИСТОРИЯ РАЗВИТИЯ · {pet.name}</p><div className="album-grid">{['Первое яйцо','Первый росток','Крылья чудес'].map((name,i)=><article className={'album-card '+(stage>=i?'':'locked')} key={name}><div className="album-art" style={petPortrait(pet.id,i)}/><div><small>ЭТАП 0{i+1}</small><h3>{name}</h3><p>{stage>=i?'✦ Уже в твоей истории':i===2?'Уровень 3 и эволюция за 30 кристаллов':`Откроется на уровне ${i+1}`}</p></div></article>)}</div><PetGallery state={s} disabled={disabled} onUnlock={(id,expectedCost)=>request('unlock_pet',id,undefined,{expectedCost})} onVisit={id=>request('visit_pet',id)} currentPetId={s?.petId??'chudik'} onVisitPet={()=>setTab('pet')}/></>}
  {!choosing&&tab==='gifts'&&<div className="gifts-layout"><section className="gift-hero"><div className="gift-portrait" style={petPortrait(pet.id,stage)}/><div><p className="eyebrow">ПОВОД ВЕРНУТЬСЯ</p><h2>Каждый день —<br/>немного волшебства</h2><p>Заглядывай к своему другу, забирай подарок и продолжай вашу историю.</p></div></section><section className="gift-list">{rewardCards}{taskCards}<p className="muted">Новый подарок появляется в 00:00 по Москве. «Первый эксперимент» доступен один раз. Все монеты — игровые.</p></section></div>}
  {!choosing&&tab==='guide'&&<section className="guide-grid">{[{icon:Heart,title:'Будь рядом',text:'Погладь питомца нажатием на картинку. Он ответит улыбкой! «Тихая минутка» меняет настроение без расхода ресурсов.'},{icon:Carrot,title:'Угощай и играй',text:'Кормление стоит 5 монет: до +20 энергии и +10 опыта. Игра: −15 энергии, +25 опыта и +3 монеты. Между действиями — 1,5 секунды. Способность хранителя может улучшать уход; точные значения показаны на кнопках.'},{icon:Sparkles,title:'Наблюдай за чудом',text:'Каждые 100 опыта — новый уровень и 25 монет. На уровне 2 питомец подрастает. С уровня 3 можно подтвердить превращение в хранителя за 30 кристаллов. Хранитель получает +5 опыта за обычную игру и личную способность. Описание — на острове и в карточке друга. Уже открытые формы сохраняются.'},{icon:Gift,title:'Возвращайся за подарком',text:'Ежедневно можно получить 20 монет и 5 кристаллов после выбора друга. Первые 10 игр дня дают по кристаллу. Выполняй задания, чтобы заработать ещё 40. Новый день начинается в 00:00 по Москве. Энергия восстанавливается: +1 в минуту, до 100.'}].map(({icon:Icon,title,text},i)=><article className="guide-card" key={title}><span className="guide-number">0{i+1}</span><Icon size={32}/><h2>{title}</h2><p>{text}</p></article>)}<div className="panel guide-note"><Leaf size={20}/><p>Прогресс сохраняется автоматически. Браузер и Telegram используют отдельные профили. Первого питомца выбираешь один раз при знакомстве. В атласе можно посмотреть всех 12 хранителей и их реакции. Кристаллы за игру и задания помогают собрать всех 12 друзей. Развивай полученных питомцев до уровня 2 и открывай формы хранителей — условия следующего приглашения показаны в альбоме. Открытых питомцев можно посещать из альбома.</p></div></section>}
- <footer><a className="footer-publisher" href="https://sberseller.ru/" target="_blank" rel="noopener noreferrer">СберСеллер <span>×</span> Чудозвери</a><span className="live-dot"/>{data?.mode==='telegram'?'Telegram · прогресс на сервере':'Браузерный тест · прогресс на сервере'}<p>Маленькая забота. Большая дружба.</p><small>Тестовая игра · без платежей и реальных призов</small></footer>
+ <footer><a className="footer-publisher" href="https://sberseller.ru/" target="_blank" rel="noopener noreferrer">СберСеллер <span>×</span> Чудозвери</a><span className="live-dot"/>{data?.mode==='telegram'?'Telegram · прогресс на сервере':'Браузерный тест · прогресс на сервере'}<p>Маленькая забота. Большая дружба.</p><small>Тестовая игра · без платежей и реальных призов</small>{data?.pilotAdmin&&<a className="pilot-entry" href="/pilot">Статистика пилота · для владельца</a>}</footer>
  <nav className="bottom-nav" aria-label="Разделы игры">{tabs.map(({id,label,icon:Icon})=><button key={id} disabled={choosing} aria-current={tab===id?'page':undefined} onClick={()=>{setTab(id);window.scrollTo({top:0,behavior:'instant'});}}><Icon size={23}/><span>{label}</span>{tab===id&&<i/>}</button>)}</nav>
 
  </main>

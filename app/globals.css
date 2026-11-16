@@ -199,3 +199,48 @@ h1{line-height:1.3}h2,h3{line-height:1.4}.brand{letter-spacing:-.06em}.brand sma
 .next-friend-goals small { display: block; line-height: 1.7; font-size: 11px; color: #63765c; }
 @media (max-width: 900px) { .intro-steps { grid-template-columns: 1fr; } }
 @media (max-width: 420px) { .intro-title { gap: 10px; } .intro-title h2 { font-size: 23px; } .intro-steps button { padding: 16px 12px; } }
+
+/* Private pilot summary and copyable, redacted support details. */
+.pilot-entry { display: block; width: fit-content; margin: 18px auto 0; font-size: 12px; }
+.support-details { width: 100%; padding: 12px; text-align: left; line-height: 1.7; }
+.support-details summary { cursor: pointer; font-weight: 700; }
+.support-details pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 14px 0; user-select: text; }
+.pilot-back { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 28px; font-size: 13px; }
+.pilot-heading { margin-bottom: 28px; }
+.pilot-heading h1 { max-width: 800px; margin-bottom: 18px; }
+.pilot-heading .muted { max-width: 700px; font-size: 14px; }
+.pilot-controls { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.pilot-controls label { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+.pilot-controls select { min-height: 44px; padding: 10px; font: inherit; color: inherit; border: 1px solid #d6e3d1; border-radius: 12px; background: #fffdf5; }
+.pilot-controls select:focus-visible { outline: 3px solid #227c67; outline-offset: 4px; }
+.pilot-refresh { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; color: #fff; background: #276b46; border-radius: 14px; }
+.pilot-notice { margin: 24px 4px; font-size: 12px; line-height: 1.8; color: #64765e; }
+.pilot-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 20px; margin-bottom: 24px; }
+.pilot-summary .panel { min-width: 0; }
+.pilot-summary small { display: block; font-size: 12px; line-height: 1.65; }
+.pilot-summary strong { display: block; font-size: 30px; color: #286747; margin: 16px 0; line-height: 1.35; }
+.pilot-summary p { font-size: 12px; line-height: 1.75; color: #64765e; }
+.pilot-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; gap: 24px; }
+.pilot-grid > section { min-width: 0; }
+.pilot-milestones { list-style: none; padding: 0; display: grid; gap: 24px; margin: 28px 0; }
+.pilot-milestones li > div { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; font-size: 13px; }
+.pilot-milestones span { white-space: nowrap; }
+.pilot-milestones progress { margin: 12px 0 0; }
+.pilot-table-wrap { overflow-x: auto; margin: 24px 0; }
+.pilot-table-wrap table { border-collapse: collapse; width: 100%; text-align: left; font-size: 12px; line-height: 1.7; }
+.pilot-table-wrap caption { text-align: left; color: #64765e; font-size: 11px; margin-bottom: 16px; }
+.pilot-table-wrap th,.pilot-table-wrap td { border-bottom: 1px solid #dce6d3; padding: 14px 12px; vertical-align: top; }
+.pilot-table-wrap th:first-child,.pilot-table-wrap td:first-child { padding-left: 0; }
+.pilot-table-wrap th { font-weight: 700; }
+.pilot-table-wrap code { font-size: 11px; }
+.pilot-empty { padding: 20px 0; font-size: 13px; line-height: 1.8; color: #64765e; }
+.pilot-diagnostics { margin-top: 24px; }
+.pilot-error-counts { list-style: none; margin: 24px 0; padding: 0; display: grid; gap: 16px; }
+.pilot-error-counts li { display: flex; justify-content: space-between; gap: 20px; font-size: 13px; }
+.pilot-error-counts small { color: #64765e; }
+.pilot-access { display: grid; gap: 16px; margin-top: 24px; }
+.pilot-access h2 { margin: 0; }
+.pilot-signin { display: block; width: fit-content; padding: 12px 20px; border-radius: 14px; background: #276b46; color: #fff; font-size: 13px; text-decoration: none; }
+@media (max-width: 900px) { .pilot-summary { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 760px) { .pilot-grid { grid-template-columns: 1fr; } .pilot-controls { gap: 18px; } .pilot-summary { gap: 16px; } .pilot-summary .panel { padding: 20px 16px; } .pilot-summary strong { font-size: 26px; } }
+@media (max-width: 420px) { .pilot-summary { grid-template-columns: 1fr; } .pilot-controls > .biome-filters { width: 100%; } .pilot-refresh { flex: 1; } }
