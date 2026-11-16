@@ -2,6 +2,46 @@ import {test} from 'node:test';import assert from 'node:assert/strict';import {c
 execFileSync(process.execPath,['node_modules/typescript/bin/tsc','lib/game/rules.ts','lib/game/auth.ts','lib/game/store.ts','lib/game/http.ts','--outDir','.sites-runtime/test-build','--module','commonjs','--target','es2022','--skipLibCheck','--types','@cloudflare/workers-types,node']);
 writeFileSync('.sites-runtime/test-build/package.json','{"type":"commonjs"}');const require=createRequire(import.meta.url);const {initial,transition,restore,day}=require('../.sites-runtime/test-build/rules.js');const {telegramUser,identify}=require('../.sites-runtime/test-build/auth.js');const {handleGame}=require('../.sites-runtime/test-build/http.js');const {act,getState}=require('../.sites-runtime/test-build/store.js');
 const now=Date.UTC(2026,10,6,20,59,59);
+test('onboarding persists first actions, can be skipped and never resets an existing profile',()=>{
+ let s=transition(initial(now),'select:owl',now);const before=structuredClone(s);
+ s=transition(s,'intro_pet',now);assert.equal(s.intro.petted,true);assert.equal(s.coins,before.coins);assert.equal(s.energy,before.energy);assert.equal(s.journey.crystals,0);assert.deepEqual(s.journey.tasks,before.journey.tasks);
+ s=transition(s,'play:owl',now);s=transition(s,'daily',now);assert.deepEqual(s.intro,{version:1,petted:true,played:true,gift:true,done:false});
+ s=transition(s,'dismiss_intro',now);const finished=structuredClone(s);s=transition(s,'intro_pet',now);assert.deepEqual(s,finished);
+ assert.equal(restore(s,now+86400000).intro.done,true);
+ const legacy=structuredClone(s);delete legacy.intro;delete legacy.journey.tasks.plan;legacy.journey.tasks.claimed=['play'];
+ const migrated=restore(legacy,now);assert.equal(migrated.intro.done,true);delete migrated.intro;assert.deepEqual(migrated,legacy);
+ const unchosen=initial(now);delete unchosen.intro;assert.equal(restore(unchosen,now).intro.done,false);
+ assert.throws(()=>transition(unchosen,'intro_pet',now),e=>e.code==='choose_first');
+ let earlyGift=transition(initial(now),'daily',now);earlyGift=transition(earlyGift,'select:luna',now);assert.equal(earlyGift.intro.gift,true);assert.equal(earlyGift.journey.crystals,0);
+});
+test('daily plans rotate deterministically while legacy targets and claims survive until Moscow midnight',()=>{
+ const {dailyQuests,questPlan}=require('../.sites-runtime/test-build/rules.js');const signatures=new Set();
+ for(let d=0;d<4;d++){
+  const t=Date.UTC(2026,10,16+d,9);let s=transition(initial(t),'select:luna',t);
+  const qs=dailyQuests(s);assert.equal(s.journey.tasks.plan,questPlan(day(t)));assert.deepEqual(dailyQuests(restore(s,t+1000)),qs);assert.equal(qs.reduce((n,q)=>n+q.reward,0),40);signatures.add(qs.map(q=>q.target).join(','));
+  s.journey.tasks.play=10;s.journey.tasks.care=10;s.journey.tasks.xp=300;
+  for(const q of qs){s=transition(s,`quest:${day(t)}:${q.id}`,t);assert.throws(()=>transition(s,`quest:${day(t)}:${q.id}`,t),e=>e.code==='already_claimed');}
+  assert.equal(s.journey.crystals,40);
+ }
+ assert.equal(signatures.size,4);
+ const t=Date.UTC(2026,10,16,20,59,59);let s=transition(initial(t),'select:luna',t);delete s.journey.tasks.plan;s.journey.tasks={day:day(t),play:3,care:5,xp:80,claimed:['play']};
+ const migrated=restore(s,t);assert.equal(migrated.journey.tasks.plan,undefined);assert.deepEqual(dailyQuests(migrated).map(q=>q.target),[3,5,100]);assert.deepEqual(migrated.journey.tasks.claimed,['play']);
+ assert.throws(()=>transition(migrated,`quest:${day(t)}:xp`,t),e=>e.code==='quest_incomplete');
+ const tomorrow=restore(migrated,t+1000);assert.equal(tomorrow.journey.tasks.plan,questPlan(day(t+1000)));assert.deepEqual(tomorrow.journey.tasks.claimed,[]);assert.equal(tomorrow.journey.tasks.play,0);assert.throws(()=>transition(tomorrow,`quest:${day(t)}:care`,t+1000),e=>e.code==='quest_expired');
+});
+test('HTTP onboarding races keep all steps, retries do not mint rewards and profiles stay isolated',async()=>{
+ const {Miniflare}=await import('miniflare');const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("ok")}}',d1Databases:['DB'],compatibilityDate:'2026-01-01'});
+ try{
+  const db=await mf.getD1Database('DB');for(const sql of readFileSync('drizzle/0000_lame_havok.sql','utf8').split('--> statement-breakpoint'))await db.prepare(sql.trim()).run();
+  const call=(action,key,user='intro-alice')=>handleGame(new Request('https://game.test/api/game',{method:'POST',headers:{origin:'https://game.test','content-type':'application/json','idempotency-key':key,'oai-authenticated-user-id':user},body:JSON.stringify(action)}),{DB:db},true);
+  assert.equal((await call({action:'select_pet',petId:'owl'},'intro-select-0001')).status,200);
+  const results=await Promise.all(['intro_pet','play','daily'].map((action,i)=>call({action},`intro-parallel-000${i}`)));assert.ok(results.every(r=>r.status===200));
+  const snapshot=await (await call({action:'intro_pet'},'intro-parallel-0000')).json();assert.equal(snapshot.replayed,true);assert.deepEqual(snapshot.state.intro,{version:1,petted:true,played:true,gift:true,done:false});assert.equal(snapshot.state.coins,73);assert.equal(snapshot.state.journey.crystals,6);
+  assert.equal((await call({action:'intro_pet'},'intro-other-profile','intro-bob')).status,409);
+  let response=await call({action:'dismiss_intro'},'intro-dismiss-0001');const closed=await response.json();assert.equal(closed.state.intro.done,true);response=await call({action:'dismiss_intro'},'intro-dismiss-0001');const retry=await response.json();assert.equal(retry.replayed,true);assert.equal(retry.state.coins,73);assert.equal(retry.state.journey.crystals,6);
+  response=await call({action:'select_pet',petId:'luna'},'intro-select-again');assert.equal(response.status,409);
+ }finally{await mf.dispose();}
+});
 test('economy, evolution and collection',()=>{let s=initial(now);for(let i=0;i<4;i++)s=transition(s,'play',now+i*2000);assert.equal(s.level,2);assert.equal(s.coins,87);assert.equal(s.energy,10);assert.equal(s.collection.length,2);assert.throws(()=>transition(s,'play',now+10000),/15 энергии/);s=transition(s,'feed',now+10000);assert.equal(s.energy,30);assert.equal(s.coins,82)});
 test('daily uses Moscow midnight; cannot claim twice',()=>{const s=transition(initial(now),'daily',now);assert.throws(()=>transition(s,'daily',now),/уже/);assert.equal(transition(s,'daily',now+1000).coins,90);assert.notEqual(day(now),day(now+1000))});
 test('offer once, cooldown and full energy',()=>{let s=transition(initial(now),'offer',now);assert.throws(()=>transition(s,'offer',now),/уже/);s=transition(s,'feed',now);assert.throws(()=>transition(s,'play',now+100),/отдыхает/);s=transition(s,'feed',now+2000);assert.equal(s.energy,100);assert.throws(()=>transition(s,'feed',now+4000),/сыт/)});
@@ -118,9 +158,10 @@ test('pet choice preserves progression and migrates existing profiles without re
   assert.equal(selected.petId,petId);
   assert.throws(()=>transition(selected,'select:chudik',selectionTime+8000),e=>e.code==='pet_already_selected');
   assert.throws(()=>transition(selected,`select:${petId}`,selectionTime+8000),e=>e.code==='pet_already_selected');
-  const {petId:ignored,journey:ignoredJourney,...progress}=selected;
-  const {petId:old,journey:oldJourney,...expected}=restore(earned,selectionTime+8000);
+  const {petId:ignored,journey:ignoredJourney,intro:selectedIntro,...progress}=selected;
+  const {petId:old,journey:oldJourney,intro:oldIntro,...expected}=restore(earned,selectionTime+8000);
   assert.deepEqual(progress,expected);
+  assert.equal(selectedIntro.gift,true);assert.deepEqual({...selectedIntro,gift:false},oldIntro);
   assert.throws(()=>transition(selected,'daily',selectionTime+8000),/уже/);
   assert.throws(()=>transition(selected,'offer',selectionTime+8000),/уже/);
  }
