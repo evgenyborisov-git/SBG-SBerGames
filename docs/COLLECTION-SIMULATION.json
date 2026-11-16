@@ -1,0 +1,153 @@
+{
+  "date_moscow": "2026-11-16",
+  "daily_rewards": "5 gift + up to 10 play + up to 40 quests",
+  "total_new_player_cost": 2250,
+  "offers_used": false,
+  "synthetic_resources_used": false,
+  "scenarios": [
+    {
+      "starter": "chudik",
+      "gamesPerDay": 10,
+      "days": 41,
+      "crystals": 5
+    },
+    {
+      "starter": "luna",
+      "gamesPerDay": 10,
+      "days": 41,
+      "crystals": 5
+    },
+    {
+      "starter": "peach",
+      "gamesPerDay": 10,
+      "days": 41,
+      "crystals": 5
+    },
+    {
+      "starter": "otter",
+      "gamesPerDay": 10,
+      "days": 41,
+      "crystals": 5
+    },
+    {
+      "starter": "owl",
+      "gamesPerDay": 10,
+      "days": 41,
+      "crystals": 5
+    },
+    {
+      "starter": "deer",
+      "gamesPerDay": 10,
+      "days": 41,
+      "crystals": 5
+    },
+    {
+      "starter": "hedgehog",
+      "gamesPerDay": 10,
+      "days": 41,
+      "crystals": 5
+    },
+    {
+      "starter": "squirrel",
+      "gamesPerDay": 10,
+      "days": 41,
+      "crystals": 5
+    },
+    {
+      "starter": "badger",
+      "gamesPerDay": 10,
+      "days": 41,
+      "crystals": 5
+    },
+    {
+      "starter": "whale",
+      "gamesPerDay": 10,
+      "days": 41,
+      "crystals": 5
+    },
+    {
+      "starter": "lynx",
+      "gamesPerDay": 10,
+      "days": 41,
+      "crystals": 5
+    },
+    {
+      "starter": "griffin",
+      "gamesPerDay": 10,
+      "days": 41,
+      "crystals": 5
+    },
+    {
+      "starter": "chudik",
+      "gamesPerDay": 4,
+      "days": 67,
+      "crystals": 28
+    },
+    {
+      "starter": "luna",
+      "gamesPerDay": 4,
+      "days": 67,
+      "crystals": 28
+    },
+    {
+      "starter": "peach",
+      "gamesPerDay": 4,
+      "days": 67,
+      "crystals": 28
+    },
+    {
+      "starter": "otter",
+      "gamesPerDay": 4,
+      "days": 67,
+      "crystals": 28
+    },
+    {
+      "starter": "owl",
+      "gamesPerDay": 4,
+      "days": 67,
+      "crystals": 28
+    },
+    {
+      "starter": "deer",
+      "gamesPerDay": 4,
+      "days": 67,
+      "crystals": 28
+    },
+    {
+      "starter": "hedgehog",
+      "gamesPerDay": 4,
+      "days": 67,
+      "crystals": 28
+    },
+    {
+      "starter": "squirrel",
+      "gamesPerDay": 4,
+      "days": 67,
+      "crystals": 28
+    },
+    {
+      "starter": "badger",
+      "gamesPerDay": 4,
+      "days": 67,
+      "crystals": 28
+    },
+    {
+      "starter": "whale",
+      "gamesPerDay": 4,
+      "days": 67,
+      "crystals": 28
+    },
+    {
+      "starter": "lynx",
+      "gamesPerDay": 4,
+      "days": 67,
+      "crystals": 28
+    },
+    {
+      "starter": "griffin",
+      "gamesPerDay": 4,
+      "days": 67,
+      "crystals": 28
+    }
+  ]
+}

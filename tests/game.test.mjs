@@ -331,3 +331,60 @@ test('HTTP evolve validates exact quote, commits form, and returns a human messa
   response=await call({action:'evolve_pet',petId:'chudik',expectedStage:1,expectedCost:30});assert.equal((await response.json()).replayed,true);
  }finally{await mf.dispose();}
 });
+
+test('third chapter preserves 6/12 progress and gives precise prerequisites and prices up to 12',()=>{
+ const ids=require('../.sites-runtime/test-build/pets.js').petIds,rules=require('../.sites-runtime/test-build/rules.js');let s=restore(initial(now),now);s.petId=ids[0];s.journey.firstPetId=ids[0];s.journey.crystals=2000;
+ for(let i=0;i<6;i++)s.journey.owned[ids[i]]={level:3,xp:i,stage:i<3?2:1,collection:['egg','grown']};
+ const original=structuredClone(s);let status=rules.unlockStatus(s);assert.equal(status.cost,180);assert.equal(status.available,false);assert.ok(status.reasons.some(x=>x.includes('4')));
+ s.journey.owned[ids[3]].stage=2;
+ for(let count=6;count<12;count++){
+  if(count>6){s.journey.owned[ids[count-1]].level=2;s.journey.owned[ids[count-3]].stage=2;}
+  status=rules.unlockStatus(s);assert.equal(status.cost,count*30);assert.equal(status.available,true);
+  assert.throws(()=>transition(s,`unlock:${ids[count]}:${status.cost-30}`,now),e=>e.code==='quote_changed');
+  s=transition(s,`unlock:${ids[count]}:${status.cost}`,now);assert.equal(s.journey.owned[ids[count]].level,1);
+ }
+ assert.equal(Object.keys(s.journey.owned).length,12);assert.equal(s.journey.crystals,470);assert.equal(s.journey.firstPetId,original.journey.firstPetId);assert.equal(s.journey.owned[ids[0]].xp,0);assert.equal(rules.unlockStatus(s).available,false);
+ assert.deepEqual(rules.collectionMilestones(s),{count:12,target:12,complete:true,steps:[{value:3,reached:true},{value:6,reached:true},{value:12,reached:true}]});
+ const stable=structuredClone(s);s=transition(s,`visit:${ids[11]}`,now);assert.equal(s.journey.crystals,stable.journey.crystals);assert.equal(rules.collectionMilestones(s).complete,true);assert.deepEqual(restore(s,now).journey,s.journey);
+});
+test('milestones count distinct owned species, never previews or evolution forms',()=>{
+ const {collectionMilestones}=require('../.sites-runtime/test-build/rules.js');let s=readyEvolution();
+ assert.equal(collectionMilestones(s).count,1);s=transition(s,'evolve:chudik:1:30',now);assert.equal(collectionMilestones(s).count,1);
+ for(const count of [0,1,2,3,5,6,11,12]){
+  const ids=require('../.sites-runtime/test-build/pets.js').petIds;const state=restore(initial(now),now);for(const id of ids.slice(0,count))state.journey.owned[id]={level:1,xp:0,stage:0,collection:['egg']};
+  const m=collectionMilestones(state);assert.equal(m.target,count<3?3:count<6?6:12);assert.equal(m.count,count);assert.equal(m.complete,count===12);
+ }
+});
+test('all 12 starters can complete the full collection without offers at both tested activity levels',()=>{
+ const ids=require('../.sites-runtime/test-build/pets.js').petIds,rules=require('../.sites-runtime/test-build/rules.js');const report=[];
+ for(const gamesPerDay of [10,4])for(const starter of ids){
+  let t=Date.UTC(2026,10,16,9),s=transition(initial(t),`select:${starter}`,t),finishedDay=0,evolutions=0;const maxDays=gamesPerDay===10?45:75;
+  for(let d=0;d<maxDays&&Object.keys(s.journey.owned).length<12;d++){
+   t=Date.UTC(2026,10,16+d,9);s=transition(s,'daily',t);
+   for(let i=0;i<gamesPerDay;i++){
+    const entries=Object.entries(s.journey.owned);const next=entries.find(([,p])=>p.level<2)??entries.find(([id,p])=>p.level<3&&rules.petStage(s,id)<2)??entries[0];
+    s=transition(s,`visit:${next[0]}`,t);t+=900000;s=transition(s,`play:${s.petId}`,t);
+    for(const q of ['play','care','xp']){try{s=transition(s,`quest:${day(t)}:${q}`,t);}catch(e){assert.ok(['already_claimed','quest_incomplete'].includes(e.code));}}
+    const count=Object.keys(s.journey.owned).length,guardians=Object.keys(s.journey.owned).filter(id=>rules.petStage(s,id)>=2).length;
+    if(count>=3&&count<12&&guardians<count-2){const ready=Object.keys(s.journey.owned).find(id=>rules.evolutionStatus(s,id).available);if(ready){s=transition(s,`evolve:${ready}:1:30`,t);evolutions++;}}
+    const status=rules.unlockStatus(s);if(status.available){const target=ids.find(id=>!s.journey.owned[id]);s=transition(s,`unlock:${target}:${status.cost}`,t);}
+    assert.ok(s.journey.crystals>=0);assert.ok(s.coins>=0);assert.ok(s.energy>=0&&s.energy<=100);assert.equal(s.offerDone,false);
+   }
+   finishedDay=d+1;
+  }
+  assert.equal(Object.keys(s.journey.owned).length,12,`${starter}/${gamesPerDay}`);assert.equal(evolutions,9);assert.equal(s.journey.firstPetId,starter);assert.equal(rules.collectionMilestones(s).complete,true);assert.equal(s.journey.crystals,finishedDay*(gamesPerDay===10?55:34)-2250);
+  report.push({starter,gamesPerDay,days:finishedDay,crystals:s.journey.crystals});
+ }
+ console.log('Full collection simulation:',JSON.stringify(report));
+});
+test('D1 final invitation is committed once, survives replays and remains isolated',async()=>{
+ const {Miniflare}=await import('miniflare');const mf=new Miniflare({modules:true,script:'export default {fetch(){return new Response("ok")}}',d1Databases:['DB'],compatibilityDate:'2026-01-01'});
+ try{
+  const db=await mf.getD1Database('DB');for(const sql of readFileSync('drizzle/0000_lame_havok.sql','utf8').split('--> statement-breakpoint'))await db.prepare(sql.trim()).run();const ids=require('../.sites-runtime/test-build/pets.js').petIds;
+  const state=restore(initial(now),now);state.petId='chudik';state.journey.firstPetId='chudik';state.journey.crystals=330;
+  for(const id of ids.slice(0,11))state.journey.owned[id]={level:3,xp:0,stage:2,collection:['egg','grown','guardian']};
+  await db.prepare('INSERT INTO players VALUES (?,?,0)').bind('finalist',JSON.stringify(state)).run();const results=await Promise.allSettled(Array.from({length:10},(_,i)=>act(db,'finalist',`final-${i}`,'unlock:griffin:330',now)));
+  assert.equal(results.filter(x=>x.status==='fulfilled').length,1);const winner=results.findIndex(x=>x.status==='fulfilled');let saved=await getState(db,'finalist',now);assert.equal(saved.state.journey.crystals,0);assert.equal(Object.keys(saved.state.journey.owned).length,12);
+  assert.equal((await act(db,'finalist',`final-${winner}`,'unlock:griffin:330',now)).replayed,true);await assert.rejects(act(db,'finalist',`final-${winner}`,'unlock:griffin:300',now),e=>e.code==='key_conflict');assert.equal(Object.keys((await getState(db,'other-player',now)).state.journey.owned).length,0);
+ }finally{await mf.dispose();}
+});

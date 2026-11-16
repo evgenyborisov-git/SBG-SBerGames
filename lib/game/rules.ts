@@ -37,16 +37,21 @@ export function evolutionStatus(state:State,petId=state.petId){
 }
 export function unlockStatus(state:State){
  const j=state.journey,owned=Object.values(j?.owned??{}),count=owned.length;
- const cost=[0,30,60,90,120,150][count]??0;
+ const cost=count>0&&count<12?count*30:0;
  const reasons:string[]=[];
  if(count===0)reasons.push('Сначала выбери первого друга');
- if(count>=6)reasons.push('Рубеж 6/12 достигнут. Следующая глава — в будущем обновлении');
- if(count>0&&count<6&&owned.filter(p=>p.level>=2).length<count)reasons.push(`Развей всех полученных друзей до уровня 2 (${owned.filter(p=>p.level>=2).length}/${count})`);
+ if(count>=12)reasons.push('Все 12 хранителей уже в коллекции');
+ if(count>0&&count<12&&owned.filter(p=>p.level>=2).length<count)reasons.push(`Развей всех полученных друзей до уровня 2 (${owned.filter(p=>p.level>=2).length}/${count})`);
  const guardians=Object.entries(j?.owned??{}).filter(([id])=>petStage(state,id as PetId)>=2).length;
  const needed=Math.max(0,count-2);
- if(count>=3&&count<6&&guardians<needed)reasons.push(`Открой форму хранителя у ${needed} друзей (${guardians}/${needed})`);
- if(count>0&&count<6&&(j?.crystals??0)<cost)reasons.push(`Не хватает ${cost-(j?.crystals??0)} кристаллов`);
+ if(count>=3&&count<12&&guardians<needed)reasons.push(`Открой форму хранителя у ${needed} друзей (${guardians}/${needed})`);
+ if(count>0&&count<12&&(j?.crystals??0)<cost)reasons.push(`Не хватает ${cost-(j?.crystals??0)} кристаллов`);
  return {count,cost,reasons,available:reasons.length===0};
+}
+export function collectionMilestones(state:State){
+ const count=Object.keys(state.journey?.owned??{}).length;
+ const target=count<3?3:count<6?6:12;
+ return {count,target,complete:count===12,steps:[3,6,12].map(value=>({value,reached:count>=value}))};
 }
 export function transition(state:State, action:Action, now:number){
  const s=restore(state,now);
