@@ -6,7 +6,7 @@ import {createRequire} from 'node:module';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 rmSync('.sites-runtime/ui-test-build',{recursive:true,force:true});
-execFileSync(process.execPath,['node_modules/typescript/bin/tsc','components/firefly-game.tsx','components/pet-evolution.tsx','components/first-steps.tsx','components/next-friend.tsx','--rootDir','.','--outDir','.sites-runtime/ui-test-build','--module','commonjs','--target','es2022','--jsx','react-jsx','--esModuleInterop','--skipLibCheck','--types','node']);
+execFileSync(process.execPath,['node_modules/typescript/bin/tsc','components/firefly-game.tsx','components/pet-evolution.tsx','components/first-steps.tsx','components/next-friend.tsx','components/island-screen.tsx','components/collection-screen.tsx','components/game-navigation.tsx','components/pilot-guide.tsx','--rootDir','.','--outDir','.sites-runtime/ui-test-build','--module','commonjs','--target','es2022','--jsx','react-jsx','--esModuleInterop','--skipLibCheck','--types','node']);
 writeFileSync('.sites-runtime/ui-test-build/package.json','{"type":"commonjs"}');
 const require=createRequire(import.meta.url),{FireflyGame}=require('../.sites-runtime/ui-test-build/components/firefly-game.js'),{PetEvolution}=require('../.sites-runtime/ui-test-build/components/pet-evolution.js'),{initial,transition}=require('../.sites-runtime/ui-test-build/lib/game/rules.js'),{abilities}=require('../.sites-runtime/ui-test-build/lib/game/abilities.js');
 test('game UI renders start, attempt limit, saved result and all guardian descriptions without browser storage',()=>{
@@ -41,4 +41,25 @@ test('next friend UI explains each server prerequisite and completes at twelve',
  s.journey.crystals=30;s.journey.owned.owl.level=2;html=render(s);assert.match(html,/Всё готово к новой встрече/);
  for(const id of Object.keys(abilities))s.journey.owned[id]={level:2,xp:0,stage:1,collection:['egg']};
  html=render(s);assert.match(html,/Все 12 друзей дома/);assert.ok(!html.includes('Кристаллы для приглашения'));
+});
+
+test('island keeps care primary and onboarding reveals only the next unfinished step',()=>{
+ const {IslandScreen}=require('../.sites-runtime/ui-test-build/components/island-screen.js'),{FirstSteps}=require('../.sites-runtime/ui-test-build/components/first-steps.js');
+ const t=Date.UTC(2026,10,16,9);let s=transition(initial(t),'select:owl',t);
+ const intro=state=>renderToStaticMarkup(React.createElement(FirstSteps,{state,disabled:false,onPet(){},onPlay(){},onGift(){},onDismiss(){}}));
+ let html=intro(s);assert.match(html,/Погладить/);assert.ok(!html.includes('Получить подарок'));assert.ok(!html.includes('Поиграйте вместе'));
+ s=transition(s,'intro_pet',t);html=intro(s);assert.match(html,/Поиграйте вместе/);assert.ok(!html.includes('Получить подарок'));
+ const props={state:s,disabled:false,emotion:{reaction:0,sequence:0,loading:false,failed:false},petLine:'Привет!',onPet(){},onFeed(){},onPlay(){},onQuiet(){},onToday(){},onCollection(){},children:null};
+ html=renderToStaticMarkup(React.createElement(IslandScreen,props));assert.match(html,/Твой питомец/);assert.match(html,/Покормить/);assert.match(html,/Поиграть/);
+ for(const secondary of ['Поляна светлячков','Задания дня','МАГИЯ ПРЕВРАЩЕНИЯ','Кристаллы для приглашения'])assert.ok(!html.includes(secondary));
+});
+
+test('four primary destinations separate games, collection and rewards; collection views preserve all pets',()=>{
+ const {GameNavigation}=require('../.sites-runtime/ui-test-build/components/game-navigation.js'),{CollectionScreen}=require('../.sites-runtime/ui-test-build/components/collection-screen.js');
+ let html=renderToStaticMarkup(React.createElement(GameNavigation,{active:'games',readyRewards:2,onNavigate(){}}));assert.equal((html.match(/<button/g)||[]).length,4);assert.match(html,/Остров/);assert.match(html,/Игры/);assert.match(html,/Питомцы/);assert.match(html,/Сегодня/);assert.ok(!html.includes('Как играть'));
+ const t=Date.UTC(2026,10,16,9),s=transition(initial(t),'select:owl',t),props={state:s,disabled:false,onView(){},onVisit(){},onHome(){},onUnlock(){},onEvolve(){}};
+ html=renderToStaticMarkup(React.createElement(CollectionScreen,{...props,view:'friends'}));assert.match(html,/К кому заглянем/);assert.match(html,/Сейчас на острове/);assert.ok(!html.includes('МАГИЯ ПРЕВРАЩЕНИЯ'));
+ html=renderToStaticMarkup(React.createElement(CollectionScreen,{...props,view:'atlas'}));assert.equal((html.match(/class="creature-card guardian-card"/g)||[]).length,12);
+ html=renderToStaticMarkup(React.createElement(CollectionScreen,{...props,view:'growth'}));assert.match(html,/МАГИЯ ПРЕВРАЩЕНИЯ/);assert.match(html,/Три облика/);
+ const {PilotGuide}=require('../.sites-runtime/ui-test-build/components/pilot-guide.js');html=renderToStaticMarkup(React.createElement(PilotGuide));assert.match(html,/Сегодня/);assert.match(html,/Завтра/);assert.match(html,/Закрой мини-приложение/);assert.match(html,/Отзыв/);
 });

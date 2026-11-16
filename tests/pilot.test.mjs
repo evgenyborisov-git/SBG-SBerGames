@@ -4,13 +4,14 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync,readdirSync,writeFileSync,rmSync} from 'node:fs';
 import {createRequire} from 'node:module';
 rmSync('.sites-runtime/pilot-test-build',{recursive:true,force:true});
-execFileSync(process.execPath,['node_modules/typescript/bin/tsc','lib/pilot-http.ts','lib/client-diagnostics.ts','lib/game/http.ts','--rootDir','lib','--outDir','.sites-runtime/pilot-test-build','--module','commonjs','--target','es2022','--skipLibCheck','--types','@cloudflare/workers-types,node']);
+execFileSync(process.execPath,['node_modules/typescript/bin/tsc','lib/pilot-http.ts','lib/feedback-http.ts','lib/client-diagnostics.ts','lib/game/http.ts','--rootDir','lib','--outDir','.sites-runtime/pilot-test-build','--module','commonjs','--target','es2022','--skipLibCheck','--types','@cloudflare/workers-types,node']);
 writeFileSync('.sites-runtime/pilot-test-build/package.json','{"type":"commonjs"}');
 const require=createRequire(import.meta.url);
 const {getState,act}=require('../.sites-runtime/pilot-test-build/game/store.js');
 const {observePlayer,readPilotReport,recordDiagnostic}=require('../.sites-runtime/pilot-test-build/pilot.js');
 const {handlePilot,handleDiagnostic}=require('../.sites-runtime/pilot-test-build/pilot-http.js');
 const {handleGame}=require('../.sites-runtime/pilot-test-build/game/http.js');
+const {handleFeedback}=require('../.sites-runtime/pilot-test-build/feedback-http.js');
 const {day}=require('../.sites-runtime/pilot-test-build/game/rules.js');
 const time=Date.UTC(2026,10,16,20,59);
 async function withDb(run){
@@ -94,3 +95,33 @@ test('client diagnostics keep only bounded codes/IDs, retry offline events and p
  events.length=0;for(let i=0;i<15;i++)queueDiagnostic('art_load_failed',crypto.randomUUID());await flushDiagnostics('private-auth');assert.equal(events.length,10);
  const copy=supportText('network_error',eventId,true,false);assert.match(copy,/Канал: Telegram/);assert.match(copy,/SDK: не доступен/);assert.ok(!copy.includes('private-auth'));assert.ok(!copy.includes('initData'));
 });
+
+test('pilot feedback validates input, persists once, isolates profiles and enforces a daily cap under concurrency',async()=>withDb(async db=>{
+ const env={DB:db,PILOT_METRICS_ENABLED:'1'},user='web:feedback';await getState(db,user,time,true);await act(db,user,'feedback-choice','select:owl',time);
+ const before=await getState(db,user,time),headers={origin:'https://game.test','content-type':'application/json','oai-authenticated-user-id':'feedback'};
+ const call=(body,extra={},when=time,config=env)=>handleFeedback(new Request('https://game.test/api/pilot-feedback',{method:'POST',headers:{...headers,...extra},body:typeof body==='string'?body:JSON.stringify(body)}),config,when);
+ const valid={eventId:crypto.randomUUID(),clarity:'some_help',liked:'reactions',blocker:'navigation',comment:"'); DROP TABLE players;--"};
+ assert.equal((await call(valid,{'oai-authenticated-user-id':''})).status,401);assert.equal((await call(valid,{origin:'https://evil.test'})).status,403);
+ for(const body of [{...valid,initData:'never-store'},{...valid,clarity:'unknown'},{...valid,comment:'x'.repeat(601)},{...valid,eventId:'bad'},[],null,'{'])assert.equal((await call(body)).status,400);
+ assert.equal((await call(' '.repeat(2049))).status,413);
+ assert.equal((await call(valid)).status,200);let replay=await (await call(valid)).json();assert.equal(replay.replayed,true);
+ assert.equal((await call({...valid,comment:'changed'})).status,409);
+ await getState(db,'web:other-feedback',time,true);await act(db,'web:other-feedback','other-choice','select:luna',time);
+ const collision=await call(valid,{'oai-authenticated-user-id':'other-feedback'});assert.equal(collision.status,409);assert.ok(!(await collision.text()).includes(valid.comment));
+ const results=await Promise.all(Array.from({length:15},()=>call({...valid,eventId:crypto.randomUUID()})));assert.equal(results.filter(r=>r.status===200).length,2);assert.ok(results.every(r=>[200,429].includes(r.status)));
+ assert.equal((await db.prepare('SELECT COUNT(*) n FROM pilot_feedback WHERE player_id=?').bind(user).first()).n,3);
+ const after=await getState(db,user,time);assert.deepEqual(after,before);
+ const report=await readPilotReport(db,14,'browser',time);assert.equal(report.feedback.count,3);assert.equal(report.feedback.recent[0].comment,valid.comment);assert.ok(!JSON.stringify(report.feedback).includes(user));assert.equal((await readPilotReport(db,14,'telegram',time)).feedback.count,0);
+ assert.equal((await call({...valid,eventId:crypto.randomUUID()},{},time+60000)).status,200);
+ assert.equal((await (await call(valid,{},time+60000)).json()).replayed,true);
+ assert.equal((await call({...valid,eventId:crypto.randomUUID()},{},time,{...env,PILOT_METRICS_ENABLED:'0'})).status,503);
+}));
+
+test('a feedback retry after an ambiguous saved response is safe and raw comments never enter server logs',async t=>withDb(async db=>{
+ await getState(db,'web:feedback-retry',time,true);await act(db,'web:feedback-retry','retry-choice','select:owl',time);
+ const logs=[];t.mock.method(console,'error',line=>logs.push(line));
+ const broken={prepare(sql){if(sql.startsWith('SELECT player_id,clarity'))throw new Error('raw-private-feedback-contents');return db.prepare(sql);},batch:db.batch.bind(db)};
+ const body={eventId:crypto.randomUUID(),clarity:'clear',liked:'pet',blocker:'none',comment:'raw-private-feedback-contents'};
+ const call=DB=>handleFeedback(new Request('https://game.test/api/pilot-feedback',{method:'POST',headers:{origin:'https://game.test','content-type':'application/json','oai-authenticated-user-id':'feedback-retry'},body:JSON.stringify(body)}),{DB,PILOT_METRICS_ENABLED:'1'},time);
+ assert.equal((await call(broken)).status,503);const response=await call(db);assert.equal(response.status,200);assert.equal((await response.json()).replayed,true);assert.equal((await db.prepare('SELECT COUNT(*) n FROM pilot_feedback').first()).n,1);assert.ok(logs.every(line=>!line.includes(body.comment)));
+}));

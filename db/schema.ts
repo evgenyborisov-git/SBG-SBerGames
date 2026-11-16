@@ -14,3 +14,8 @@ export const pilotErrors=sqliteTable('pilot_errors',{
  requestId:text('request_id').primaryKey(),playerId:text('player_id').notNull().references(()=>players.id,{onDelete:'cascade'}),
  day:text('day').notNull(),channel:text('channel').notNull(),code:text('code').notNull(),source:text('source').notNull(),occurredAt:integer('occurred_at').notNull(),
 },t=>[index('pilot_errors_daily_cap').on(t.playerId,t.day),index('pilot_errors_day').on(t.day)]);
+export const pilotFeedback=sqliteTable('pilot_feedback',{
+ requestId:text('request_id').primaryKey(),playerId:text('player_id').notNull().references(()=>players.id,{onDelete:'cascade'}),
+ day:text('day').notNull(),occurredAt:integer('occurred_at').notNull(),
+ clarity:text('clarity').notNull(),liked:text('liked').notNull(),blocker:text('blocker').notNull(),comment:text('comment').notNull(),
+},t=>[index('pilot_feedback_daily').on(t.playerId,t.day),index('pilot_feedback_day').on(t.day)]);

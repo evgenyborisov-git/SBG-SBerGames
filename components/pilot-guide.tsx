@@ -1,0 +1,5 @@
+import {pilotScenario} from '../lib/pilot-scenario';
+
+export function PilotGuide(){
+ return <section className="pilot-guide" aria-labelledby="playtest-title"><p className="eyebrow">ПРОБУЕМ ИГРУ ВМЕСТЕ</p><h2 id="playtest-title">Два коротких знакомства с островом</h2><p className="muted">Не нужно проходить всю игру. Нам важно понять, что понятно с первого раза и хочется ли вернуться.</p><div className="playtest-days">{pilotScenario.map(day=><section className="panel" key={day.title}><h3>{day.title}</h3><ol>{day.steps.map(step=><li key={step}>{step}</li>)}</ol></section>)}</div><section className="panel"><h3>После игры — три вопроса</h3><ul><li>Было ли понятно, что делать?</li><li>Что понравилось больше всего?</li><li>Что мешало играть?</li></ul><p>Отзыв можно оставить в игре: «Помощь» → «Отзыв». При ошибке раскрой «Диагностика для поддержки» и скопируй номер запроса; скриншот можно приложить при личном обсуждении.</p><p className="muted">Продолжай в том же Telegram-профиле. Браузерный тест — отдельный профиль. Сбрасывать прогресс ради проверки не нужно.</p></section></section>;
+}
